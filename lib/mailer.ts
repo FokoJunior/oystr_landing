@@ -14,11 +14,12 @@ export const FROM = process.env.SMTP_FROM || '"Oystr" <oystr@bmptravel.com>';
 
 // ── Email Templates ──────────────────────────────────────────────────────────
 
-export function confirmationEmail(email: string) {
+export function confirmationEmail(email: string, firstName = '') {
+    const greeting = firstName ? `Hey ${firstName}` : 'Hey there';
     return {
         from: FROM,
         to: email,
-        subject: '🚀 You\'re on the Oystr crew list!',
+        subject: '🚀 You\'re on the Oystr waitlist!',
         html: `
 <!DOCTYPE html>
 <html>
@@ -33,19 +34,18 @@ export function confirmationEmail(email: string) {
             <td style="background:linear-gradient(135deg,rgba(56,189,248,0.12),rgba(251,191,36,0.06));padding:48px 40px;text-align:center;">
               <img src="https://oystr-landing.vercel.app/logo-theme-sombre.png" alt="OYSTR" style="height:60px;width:auto;margin-bottom:12px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
               <div style="display:none;font-size:3rem;font-weight:900;letter-spacing:-0.04em;margin-bottom:8px;">
-                OYS<span style="color:#38BDF8;">TR</span><span style="color:#FBBF24;">.</span>
+                OYS<span style="color:#38BDF8;">TR</span><span style="color:#FBBF24;">™</span>
               </div>
-              <div style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.4);">Bucket List Help — Coming Soon</div>
+              <div style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.4);">Coming Soon</div>
             </td>
-
           </tr>
           <!-- Body -->
           <tr>
             <td style="padding:40px;">
-              <h2 style="font-size:1.5rem;font-weight:800;color:#38BDF8;margin:0 0 16px;">You're officially on the crew! 🎉</h2>
+              <h2 style="font-size:1.5rem;font-weight:800;color:#38BDF8;margin:0 0 16px;">${greeting} — you're on the waitlist! 🎉</h2>
               <p style="color:rgba(255,255,255,0.7);line-height:1.7;margin:0 0 24px;">
-                Dreams are the content. The community makes them happen.<br><br>
-                <strong style="color:#fff;">You'll be the first to know</strong> when OYSTR launches on <strong style="color:#FBBF24;">July 15, 2026</strong>. We'll send you an exclusive early access invite so you can start launching your Moonshots from day one.
+                What&apos;s on your bucket list? You&apos;re about to find out.<br><br>
+                <strong style="color:#fff;">You'll be among the first to discover Oystr</strong> when we launch on <strong style="color:#FBBF24;">July 15, 2026</strong>. We'll send you an exclusive early access invite straight to your inbox.
               </p>
               <div style="background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);border-radius:12px;padding:20px 24px;margin-bottom:32px;">
                 <p style="margin:0;font-size:0.8rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:8px;">Your Moonshot starts on</p>
