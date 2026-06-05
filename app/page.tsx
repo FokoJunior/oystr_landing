@@ -217,7 +217,7 @@ export default function ComingSoon() {
             <img
               src="/logo-theme-sombre.png"
               alt="OYSTR Logo"
-              style={{ height: 'clamp(60px, 15vw, 120px)', width: 'auto', filter: 'drop-shadow(0 0 20px rgba(56, 189, 248, 0.3))' }}
+              style={{ height: 'clamp(60px, 15vw, 120px)', width: 'auto', filter: 'drop-shadow(0 0 20px rgba(56, 189, 248, 0.3) )' }}
             />
           </motion.div>
         </div>
