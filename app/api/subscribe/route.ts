@@ -4,7 +4,7 @@ import { transporter, confirmationEmail } from '@/lib/mailer';
 
 export async function POST(req: NextRequest) {
     try {
-        const { email } = await req.json();
+        const { email, firstName } = await req.json();
 
         if (!email || typeof email !== 'string' || !email.includes('@')) {
             return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
         // Fire-and-forget — don't block the response on email delivery
         transporter
-            .sendMail(confirmationEmail(email.trim().toLowerCase()))
+            .sendMail(confirmationEmail(email.trim().toLowerCase(), typeof firstName === 'string' ? firstName.trim() : ''))
             .catch((err) => console.error('[subscribe] Confirmation email failed:', err));
 
         return NextResponse.json({ message: 'Subscribed successfully!', added: true });

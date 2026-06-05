@@ -134,6 +134,7 @@ function RingBlock({ value, label, max, color }: { value: number; label: string;
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ComingSoon() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -150,7 +151,7 @@ export default function ComingSoon() {
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, firstName: firstName.trim() }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -183,7 +184,7 @@ export default function ComingSoon() {
   }, []);
 
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', padding: '1rem' }}>
+    <main style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', padding: '1rem' }}>
       {/* Decorative Orbs */}
       <div style={{ position: 'absolute', top: '-20%', right: '-15%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0 }} />
       <div style={{ position: 'absolute', bottom: '-20%', left: '-15%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0 }} />
@@ -203,7 +204,7 @@ export default function ComingSoon() {
           <motion.span animate={{ rotate: [0, 20, -10, 0] }} transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}>
             <Rocket size={14} />
           </motion.span>
-          Countdown to Launch
+          Coming Soon
         </motion.div>
 
         {/* Headline / Logo */}
@@ -223,26 +224,26 @@ export default function ComingSoon() {
         </div>
 
 
-        {/* Tagline */}
+        {/* Hook */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.8 }}
-          style={{ fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem', lineHeight: 1.7, fontWeight: 500 }}
+          style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', color: '#fff', marginBottom: '0.75rem', lineHeight: 1.3, fontWeight: 700, fontFamily: 'var(--font-plus-jakarta)' }}
         >
-          Dreams are the content.<br />The community makes them happen.
+          What&apos;s on your bucket list?
         </motion.p>
 
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.1, duration: 1 }}
-          style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+          style={{ fontSize: 'clamp(0.9rem, 2vw, 1.05rem)', color: 'rgba(255,255,255,0.55)', marginBottom: '3rem', lineHeight: 1.7, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}
         >
           <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 2 }}>
             <Sparkles size={13} color="#FBBF24" />
           </motion.span>
-          Launching your next Moonshot soon
+          Be among the first to discover Oystr. Join the waitlist today.
         </motion.p>
 
         {/* ── Countdown Rings ── */}
@@ -274,20 +275,33 @@ export default function ComingSoon() {
                 exit={{ opacity: 0 }}
                 style={{ padding: '16px 28px', borderRadius: 14, background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.3)', color: '#34D399', fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
               >
-                <Star size={18} fill="#34D399" /> You&apos;re on the crew list!
+                <Star size={18} fill="#34D399" /> {firstName ? `Welcome, ${firstName}! You're on the list.` : "You're on the waitlist!"}
               </motion.div>
             ) : (
               <motion.div
                 key="form"
                 style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
               >
+                {/* First name */}
+                <div style={{ background: 'rgba(16,24,40,0.75)', backdropFilter: 'blur(14px)', border: '1px solid rgba(56,189,248,0.18)', borderRadius: 14, overflow: 'hidden' }}>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
+                    placeholder="First name"
+                    disabled={loading}
+                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', padding: '14px 18px', color: '#fff', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                  />
+                </div>
+                {/* Email + submit */}
                 <div style={{ display: 'flex', background: 'rgba(16,24,40,0.75)', backdropFilter: 'blur(14px)', border: `1px solid ${error ? 'rgba(248,113,113,0.4)' : 'rgba(56,189,248,0.18)'}`, borderRadius: 14, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', transition: 'border-color 0.2s' }}>
                   <input
                     type="email"
                     value={email}
                     onChange={e => { setEmail(e.target.value); setError(''); }}
                     onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
-                    placeholder="Enter your email"
+                    placeholder="Email"
                     disabled={loading}
                     style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', padding: '14px 18px', color: '#fff', fontSize: '0.875rem' }}
                   />
@@ -298,7 +312,7 @@ export default function ComingSoon() {
                     disabled={loading}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: loading ? 'rgba(56,189,248,0.4)' : 'linear-gradient(135deg, #38BDF8, #0284C7)', color: '#fff', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.875rem', fontFamily: 'var(--font-plus-jakarta)', borderRadius: 10, margin: 4, boxShadow: '0 4px 16px rgba(56,189,248,0.3)', whiteSpace: 'nowrap', transition: 'background 0.2s' }}
                   >
-                    {loading ? '...' : <><span>Join the Crew</span> <Send size={15} /></>}
+                    {loading ? '...' : <><span>Join Waitlist</span> <Send size={15} /></>}
                   </motion.button>
                 </div>
                 {error && (
