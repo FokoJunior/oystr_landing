@@ -294,8 +294,8 @@ export default function ComingSoon() {
                     style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', padding: '14px 18px', color: '#fff', fontSize: '0.875rem', boxSizing: 'border-box' }}
                   />
                 </div>
-                {/* Email + submit */}
-                <div style={{ display: 'flex', background: 'rgba(16,24,40,0.75)', backdropFilter: 'blur(14px)', border: `1px solid ${error ? 'rgba(248,113,113,0.4)' : 'rgba(56,189,248,0.18)'}`, borderRadius: 14, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', transition: 'border-color 0.2s' }}>
+                {/* Email */}
+                <div style={{ background: 'rgba(16,24,40,0.75)', backdropFilter: 'blur(14px)', border: `1px solid ${error ? 'rgba(248,113,113,0.4)' : 'rgba(56,189,248,0.18)'}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.2s' }}>
                   <input
                     type="email"
                     value={email}
@@ -303,18 +303,20 @@ export default function ComingSoon() {
                     onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
                     placeholder="Email"
                     disabled={loading}
-                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', padding: '14px 18px', color: '#fff', fontSize: '0.875rem' }}
+                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', padding: '14px 18px', color: '#fff', fontSize: '0.875rem' }}
                   />
-                  <motion.button
-                    whileHover={{ scale: loading ? 1 : 1.04 }}
-                    whileTap={{ scale: loading ? 1 : 0.97 }}
-                    onClick={handleSubscribe}
-                    disabled={loading}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: loading ? 'rgba(56,189,248,0.4)' : 'linear-gradient(135deg, #38BDF8, #0284C7)', color: '#fff', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.875rem', fontFamily: 'var(--font-plus-jakarta)', borderRadius: 10, margin: 4, boxShadow: '0 4px 16px rgba(56,189,248,0.3)', whiteSpace: 'nowrap', transition: 'background 0.2s' }}
-                  >
-                    {loading ? '...' : <><span>Join Waitlist</span> <Send size={15} /></>}
-                  </motion.button>
                 </div>
+                {/* Submit button below */}
+                <motion.button
+                  whileHover={{ scale: loading ? 1 : 1.04 }}
+                  whileTap={{ scale: loading ? 1 : 0.97 }}
+                  onClick={handleSubscribe}
+                  disabled={loading}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '14px 28px', background: loading ? 'rgba(56,189,248,0.4)' : 'linear-gradient(135deg, #38BDF8, #0284C7)', color: '#fff', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.9rem', fontFamily: 'var(--font-plus-jakarta)', borderRadius: 14, marginTop: 10, boxShadow: '0 4px 20px rgba(56,189,248,0.3)', transition: 'background 0.2s' }}
+                >
+                  {loading ? 'Adding to list...' : <><span>Join the Waitlist</span> <Send size={16} /></>}
+                </motion.button>
+
                 {error && (
                   <motion.p initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} style={{ color: '#F87171', fontSize: '0.75rem', textAlign: 'center', marginTop: 4, fontWeight: 600 }}>{error}</motion.p>
                 )}
