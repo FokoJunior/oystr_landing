@@ -31,11 +31,13 @@ export function confirmationEmail(email: string) {
           <!-- Header -->
           <tr>
             <td style="background:linear-gradient(135deg,rgba(56,189,248,0.12),rgba(251,191,36,0.06));padding:48px 40px;text-align:center;">
-              <div style="font-size:3rem;font-weight:900;letter-spacing:-0.04em;margin-bottom:8px;">
+              <img src="https://oystr-landing.vercel.app/logo-theme-sombre.png" alt="OYSTR" style="height:60px;width:auto;margin-bottom:12px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+              <div style="display:none;font-size:3rem;font-weight:900;letter-spacing:-0.04em;margin-bottom:8px;">
                 OYS<span style="color:#38BDF8;">TR</span><span style="color:#FBBF24;">.</span>
               </div>
               <div style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.4);">Bucket List Help — Coming Soon</div>
             </td>
+
           </tr>
           <!-- Body -->
           <tr>
@@ -59,7 +61,7 @@ export function confirmationEmail(email: string) {
           <tr>
             <td style="border-top:1px solid rgba(255,255,255,0.06);padding:24px 40px;text-align:center;">
               <p style="margin:0;color:rgba(255,255,255,0.2);font-size:0.75rem;">
-                OYSTR · oystr.app · St. Catharines, ON<br>
+                OYSTR · oystr · St. Catharines, ON<br>
                 © 2026 Closure Solutions Ltd.
               </p>
             </td>
@@ -106,7 +108,7 @@ export function launchEmail(email: string) {
                 Start discovering Moonshots, join crews, and share your own epic life goals with the community.
               </p>
               <div style="text-align:center;margin:32px 0;">
-                <a href="https://oystr.app" style="display:inline-block;padding:16px 40px;background:linear-gradient(135deg,#38BDF8,#0284C7);color:#fff;font-weight:700;font-size:1rem;border-radius:12px;text-decoration:none;box-shadow:0 4px 20px rgba(56,189,248,0.3);">Launch My Moonshot →</a>
+                <a href="https://oystr.ca" style="display:inline-block;padding:16px 40px;background:linear-gradient(135deg,#38BDF8,#0284C7);color:#fff;font-weight:700;font-size:1rem;border-radius:12px;text-decoration:none;box-shadow:0 4px 20px rgba(56,189,248,0.3);">Launch My Moonshot →</a>
               </div>
               <p style="color:rgba(255,255,255,0.4);font-size:0.8rem;line-height:1.6;margin:0;">
                 You're receiving this because you signed up for early access.<br>
@@ -119,7 +121,7 @@ export function launchEmail(email: string) {
           <tr>
             <td style="border-top:1px solid rgba(255,255,255,0.06);padding:24px 40px;text-align:center;">
               <p style="margin:0;color:rgba(255,255,255,0.2);font-size:0.75rem;">
-                OYSTR · oystr.app · St. Catharines, ON<br>
+                OYSTR · oystr.ca · St. Catharines, ON<br>
                 © 2026 Closure Solutions Ltd.
               </p>
             </td>

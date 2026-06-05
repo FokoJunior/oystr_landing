@@ -206,22 +206,22 @@ export default function ComingSoon() {
           Countdown to Launch
         </motion.div>
 
-        {/* Headline */}
-        <div style={{ overflow: 'hidden', marginBottom: '0.75rem' }}>
-          <motion.h1
-            initial={{ y: '100%', opacity: 0 }}
+        {/* Headline / Logo */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.9, type: 'spring', stiffness: 70 }}
-            style={{ fontSize: 'clamp(3rem, 12vw, 7rem)', fontWeight: 800, fontFamily: 'var(--font-plus-jakarta)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 0, color: '#fff', textShadow: '0 2px 40px rgba(0,0,0,0.5)' }}
+            transition={{ delay: 0.4, duration: 0.9, type: 'spring' }}
+            style={{ display: 'flex', justifyContent: 'center' }}
           >
-            OYS<motion.span
-              style={{ color: '#38BDF8', display: 'inline-block' }}
-              animate={{ textShadow: ['0 0 8px #38BDF8', '0 0 30px #38BDF8', '0 0 8px #38BDF8'] }}
-              transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-            >TR</motion.span>
-            <span style={{ color: '#FBBF24' }}>.</span>
-          </motion.h1>
+            <img
+              src="/logo-theme-sombre.png"
+              alt="OYSTR Logo"
+              style={{ height: 'clamp(60px, 15vw, 120px)', width: 'auto', filter: 'drop-shadow(0 0 20px rgba(56, 189, 248, 0.3))' }}
+            />
+          </motion.div>
         </div>
+
 
         {/* Tagline */}
         <motion.p
