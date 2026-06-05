@@ -1,34 +1,37 @@
-/**
- * Simple file-based subscriber store.
- * Saves emails to data/subscribers.json at the project root.
- * In production, replace with a database like Supabase/Prisma.
- */
-import fs from 'fs';
-import path from 'path';
+import { supabaseAdmin } from './supabase';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const FILE = path.join(DATA_DIR, 'subscribers.json');
+export async function getSubscribers(): Promise<string[]> {
+    const { data, error } = await supabaseAdmin
+        .from('subscribers')
+        .select('email')
+        .order('created_at', { ascending: true });
 
-function ensureFile() {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    if (!fs.existsSync(FILE)) fs.writeFileSync(FILE, JSON.stringify([]), 'utf-8');
+    if (error) throw new Error(error.message);
+    return data.map((row) => row.email as string);
 }
 
-export function getSubscribers(): string[] {
-    ensureFile();
-    try {
-        return JSON.parse(fs.readFileSync(FILE, 'utf-8')) as string[];
-    } catch {
-        return [];
-    }
-}
-
-export function addSubscriber(email: string): { added: boolean; already: boolean } {
-    ensureFile();
-    const list = getSubscribers();
+export async function addSubscriber(
+    email: string
+): Promise<{ added: boolean; already: boolean }> {
     const norm = email.trim().toLowerCase();
-    if (list.includes(norm)) return { added: false, already: true };
-    list.push(norm);
-    fs.writeFileSync(FILE, JSON.stringify(list, null, 2), 'utf-8');
+
+    const { error } = await supabaseAdmin
+        .from('subscribers')
+        .insert({ email: norm });
+
+    if (error) {
+        if (error.code === '23505') return { added: false, already: true };
+        throw new Error(error.message);
+    }
+
     return { added: true, already: false };
+}
+
+export async function getSubscriberCount(): Promise<number> {
+    const { count, error } = await supabaseAdmin
+        .from('subscribers')
+        .select('*', { count: 'exact', head: true });
+
+    if (error) throw new Error(error.message);
+    return count ?? 0;
 }

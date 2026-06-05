@@ -6,20 +6,20 @@ export async function POST(req: NextRequest) {
     try {
         const { email } = await req.json();
 
-        // Validate
         if (!email || typeof email !== 'string' || !email.includes('@')) {
             return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
         }
 
-        // Save subscriber
-        const { added, already } = addSubscriber(email);
+        const { added, already } = await addSubscriber(email);
 
         if (already) {
             return NextResponse.json({ message: 'Already on the list!', already: true });
         }
 
-        // Send confirmation email
-        await transporter.sendMail(confirmationEmail(email.trim().toLowerCase()));
+        // Fire-and-forget — don't block the response on email delivery
+        transporter
+            .sendMail(confirmationEmail(email.trim().toLowerCase()))
+            .catch((err) => console.error('[subscribe] Confirmation email failed:', err));
 
         return NextResponse.json({ message: 'Subscribed successfully!', added: true });
     } catch (err) {
