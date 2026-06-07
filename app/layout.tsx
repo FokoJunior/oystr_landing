@@ -32,6 +32,8 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${plusJakarta.variable}`} suppressHydrationWarning>
       <head>
         <script
+          type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=window.location.pathname==='/'?'dark':(localStorage.getItem('oystr_theme')||(window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'));document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
           }}
