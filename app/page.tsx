@@ -251,7 +251,7 @@ export default function ComingSoon() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.3, duration: 0.8 }}
-          style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(1rem, 4vw, 2.5rem)', marginBottom: '3rem', flexWrap: 'wrap' }}
+          style={{ display: 'flex', justifyContent: 'center', columnGap: 'clamp(1rem, 4vw, 2.5rem)', rowGap: '2rem', marginBottom: '3rem', flexWrap: 'wrap' }}
         >
           <RingBlock value={timeLeft.days} label="Days" max={40} color="#38BDF8" />
           <RingBlock value={timeLeft.hours} label="Hours" max={24} color="#FBBF24" />
