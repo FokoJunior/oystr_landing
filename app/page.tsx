@@ -1,7 +1,7 @@
 'use client';
 
-import { motion, useScroll, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { motion, useScroll, AnimatePresence, useMotionValue, useSpring, useTransform, MotionValue } from 'framer-motion';
+import { useEffect, useState, useRef } from 'react';
 import { Rocket, Send, Sparkles, Star, Moon, Compass, Trophy, Zap, Heart, Globe } from 'lucide-react';
 
 // ─── Floating Particles ──────────────────────────────────────────────────────
@@ -78,6 +78,85 @@ function TwinkleStars() {
   );
 }
 
+// ─── Cursor Spotlight (desktop only) ─────────────────────────────────────────
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(pointer: fine) and (min-width: 768px)');
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isDesktop;
+}
+
+function Spotlight({ x, y }: { x: MotionValue<number>; y: MotionValue<number> }) {
+  const background = useTransform([x, y], (latest) => {
+    const [xv, yv] = latest as number[];
+    return `radial-gradient(620px circle at ${xv * 100}% ${yv * 100}%, rgba(56,189,248,0.07), transparent 45%)`;
+  });
+  return <motion.div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, background }} />;
+}
+
+// ─── Magnetic Hover Hook ──────────────────────────────────────────────────────
+function useMagnetic(strength = 0.3) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springX = useSpring(x, { stiffness: 150, damping: 14, mass: 0.15 });
+  const springY = useSpring(y, { stiffness: 150, damping: 14, mass: 0.15 });
+
+  function onMouseMove(e: React.MouseEvent<HTMLElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    x.set((e.clientX - rect.left - rect.width / 2) * strength);
+    y.set((e.clientY - rect.top - rect.height / 2) * strength);
+  }
+  function onMouseLeave() {
+    x.set(0);
+    y.set(0);
+  }
+  return { x: springX, y: springY, onMouseMove, onMouseLeave };
+}
+
+// ─── Confetti Burst ──────────────────────────────────────────────────────────
+function Confetti({ trigger }: { trigger: boolean }) {
+  const [pieces, setPieces] = useState<any[]>([]);
+  useEffect(() => {
+    if (!trigger) return;
+    setPieces(
+      Array.from({ length: 36 }).map((_, i) => ({
+        id: i,
+        x: (Math.random() - 0.5) * 360,
+        y: -(Math.random() * 140 + 60),
+        fall: Math.random() * 160 + 140,
+        rotate: Math.random() * 720 - 360,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        size: Math.random() * 7 + 5,
+        delay: Math.random() * 0.18,
+        round: Math.random() > 0.5,
+      }))
+    );
+    const t = setTimeout(() => setPieces([]), 2400);
+    return () => clearTimeout(t);
+  }, [trigger]);
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <AnimatePresence>
+        {pieces.map((p) => (
+          <motion.span
+            key={p.id}
+            initial={{ opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 }}
+            animate={{ opacity: 0, x: p.x, y: p.y + p.fall, rotate: p.rotate, scale: 0.6 }}
+            transition={{ duration: 1.5, delay: p.delay, ease: [0.16, 1, 0.3, 1] }}
+            style={{ position: 'absolute', width: p.size, height: p.size, background: p.color, borderRadius: p.round ? '50%' : 2 }}
+          />
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ─── SVG Ring Countdown Block ─────────────────────────────────────────────────
 function RingBlock({ value, label, max, color }: { value: number; label: string; max: number; color: string }) {
   const R = 46;
@@ -139,6 +218,25 @@ export default function ComingSoon() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [focusedField, setFocusedField] = useState<'name' | 'email' | null>(null);
+
+  const isDesktop = useIsDesktop();
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+  const spotlightX = useSpring(mouseX, { stiffness: 60, damping: 20 });
+  const spotlightY = useSpring(mouseY, { stiffness: 60, damping: 20 });
+  const orbX = useTransform(spotlightX, [0, 1], [-24, 24]);
+  const orbY = useTransform(spotlightY, [0, 1], [-24, 24]);
+  const orb2X = useTransform(orbX, (v) => -v);
+  const orb2Y = useTransform(orbY, (v) => -v);
+  const magnetic = useMagnetic(0.25);
+
+  function handleMainMouseMove(e: React.MouseEvent<HTMLElement>) {
+    if (!isDesktop) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width);
+    mouseY.set((e.clientY - rect.top) / rect.height);
+  }
 
   async function handleSubscribe() {
     if (!email || !email.includes('@')) {
@@ -184,11 +282,12 @@ export default function ComingSoon() {
   }, []);
 
   return (
-    <main style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', padding: '1rem' }}>
-      {/* Decorative Orbs */}
-      <div style={{ position: 'absolute', top: '-20%', right: '-15%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0 }} />
-      <div style={{ position: 'absolute', bottom: '-20%', left: '-15%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0 }} />
+    <main onMouseMove={handleMainMouseMove} style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', padding: '1rem' }}>
+      {/* Decorative Orbs (parallax on cursor) */}
+      <motion.div style={{ position: 'absolute', top: '-20%', right: '-15%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, x: orbX, y: orbY }} />
+      <motion.div style={{ position: 'absolute', bottom: '-20%', left: '-15%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, x: orb2X, y: orb2Y }} />
 
+      {isDesktop && <Spotlight x={spotlightX} y={spotlightY} />}
       <TwinkleStars />
       <FloatingParticles />
 
@@ -264,7 +363,7 @@ export default function ComingSoon() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.7, duration: 0.8 }}
-          style={{ maxWidth: 460, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}
+          style={{ maxWidth: 460, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10, position: 'relative' }}
         >
           <AnimatePresence mode="wait">
             {submitted ? (
@@ -283,36 +382,52 @@ export default function ComingSoon() {
                 style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
               >
                 {/* First name */}
-                <div style={{ background: 'rgba(16,24,40,0.75)', backdropFilter: 'blur(14px)', border: '1px solid rgba(56,189,248,0.18)', borderRadius: 14, overflow: 'hidden' }}>
+                <motion.div
+                  animate={{ boxShadow: focusedField === 'name' ? '0 0 0 1px rgba(56,189,248,0.4), 0 0 22px rgba(56,189,248,0.22)' : '0 0 0 1px rgba(56,189,248,0.18), 0 0 0px rgba(56,189,248,0)' }}
+                  transition={{ duration: 0.3 }}
+                  style={{ background: 'rgba(16,24,40,0.75)', backdropFilter: 'blur(14px)', borderRadius: 14, overflow: 'hidden' }}
+                >
                   <input
                     type="text"
                     value={firstName}
                     onChange={e => setFirstName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
+                    onFocus={() => setFocusedField('name')}
+                    onBlur={() => setFocusedField(null)}
                     placeholder="First name"
                     disabled={loading}
                     style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', padding: '14px 18px', color: '#fff', fontSize: '0.875rem', boxSizing: 'border-box' }}
                   />
-                </div>
+                </motion.div>
                 {/* Email */}
-                <div style={{ background: 'rgba(16,24,40,0.75)', backdropFilter: 'blur(14px)', border: `1px solid ${error ? 'rgba(248,113,113,0.4)' : 'rgba(56,189,248,0.18)'}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+                <motion.div
+                  animate={{ boxShadow: focusedField === 'email'
+                    ? '0 0 0 1px rgba(56,189,248,0.4), 0 0 22px rgba(56,189,248,0.22)'
+                    : `0 0 0 1px ${error ? 'rgba(248,113,113,0.4)' : 'rgba(56,189,248,0.18)'}, 0 0 0px rgba(56,189,248,0)` }}
+                  transition={{ duration: 0.3 }}
+                  style={{ background: 'rgba(16,24,40,0.75)', backdropFilter: 'blur(14px)', borderRadius: 14, overflow: 'hidden' }}
+                >
                   <input
                     type="email"
                     value={email}
                     onChange={e => { setEmail(e.target.value); setError(''); }}
                     onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
+                    onFocus={() => setFocusedField('email')}
+                    onBlur={() => setFocusedField(null)}
                     placeholder="Email"
                     disabled={loading}
-                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', padding: '14px 18px', color: '#fff', fontSize: '0.875rem' }}
+                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', padding: '14px 18px', color: '#fff', fontSize: '0.875rem', boxSizing: 'border-box' }}
                   />
-                </div>
-                {/* Submit button below */}
+                </motion.div>
+                {/* Submit button (magnetic) */}
                 <motion.button
+                  onMouseMove={magnetic.onMouseMove}
+                  onMouseLeave={magnetic.onMouseLeave}
                   whileHover={{ scale: loading ? 1 : 1.04 }}
                   whileTap={{ scale: loading ? 1 : 0.97 }}
                   onClick={handleSubscribe}
                   disabled={loading}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '14px 28px', background: loading ? 'rgba(56,189,248,0.4)' : 'linear-gradient(135deg, #38BDF8, #0284C7)', color: '#fff', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.9rem', fontFamily: 'var(--font-plus-jakarta)', borderRadius: 14, marginTop: 10, boxShadow: '0 4px 20px rgba(56,189,248,0.3)', transition: 'background 0.2s' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '14px 28px', background: loading ? 'rgba(56,189,248,0.4)' : 'linear-gradient(135deg, #38BDF8, #0284C7)', color: '#fff', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.9rem', fontFamily: 'var(--font-plus-jakarta)', borderRadius: 14, marginTop: 10, boxShadow: '0 4px 20px rgba(56,189,248,0.3)', transition: 'background 0.2s', x: magnetic.x, y: magnetic.y }}
                 >
                   {loading ? 'Adding to list...' : <><span>Join the Waitlist</span> <Send size={16} /></>}
                 </motion.button>
@@ -323,6 +438,7 @@ export default function ComingSoon() {
               </motion.div>
             )}
           </AnimatePresence>
+          <Confetti trigger={submitted} />
         </motion.div>
       </div>
 
