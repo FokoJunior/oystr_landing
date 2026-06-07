@@ -17,6 +17,27 @@
   --text-primary: #F0F6FF;
   --text-secondary: #9BB0CC;
   --text-muted: #556880;
+
+  --nav-bg: rgba(8, 13, 26, 0.6);
+  --card-bg: rgba(16, 24, 40, 0.6);
+  --section-bg: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme='light'] {
+  --background: #F4F8FC;
+  --foreground: #0F172A;
+  --accent: #2563EB;
+  --accent-secondary: #FB923C;
+
+  --glass: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+
+  --nav-bg: rgba(255, 255, 255, 0.7);
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --section-bg: rgba(15, 23, 42, 0.03);
 }
 
 * {
@@ -31,6 +52,7 @@ body {
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .gradient-bg {
@@ -47,6 +69,12 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   background-color: var(--background);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+[data-theme='light'] .gradient-bg {
+  opacity: 0;
 }
 
 .glass {

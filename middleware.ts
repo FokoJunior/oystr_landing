@@ -10,10 +10,13 @@ export function middleware(request: NextRequest) {
 
     // If we are before the launch date and trying to access anything other than the root (Coming Soon)
     if (now < LAUNCH_DATE && pathname !== '/') {
-        // Allow static assets, images, and internal next paths
+        // Allow static assets, images, internal next paths, and the public marketing pages
         if (
             pathname.startsWith('/_next') ||
             pathname.startsWith('/api') ||
+            pathname.startsWith('/home') ||
+            pathname.startsWith('/about') ||
+            pathname.startsWith('/contact') ||
             pathname.includes('.')
         ) {
             return NextResponse.next();

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import VisitTracker from '@/components/VisitTracker';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import Nav from '@/components/Nav';
 import "./globals.css";
 
 const inter = Inter({
@@ -29,9 +31,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${plusJakarta.variable}`}>
       <body className="antialiased">
-        <div className="gradient-bg" />
-        <VisitTracker />
-        {children}
+        <ThemeProvider>
+          <div className="gradient-bg" />
+          <VisitTracker />
+          <Nav />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
