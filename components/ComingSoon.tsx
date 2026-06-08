@@ -283,6 +283,20 @@ export default function ComingSoon() {
 
   return (
     <main onMouseMove={handleMainMouseMove} style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', padding: '1rem' }}>
+      {/* Self-contained branded background — always dark, regardless of the page's light/dark theme */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: -1,
+          backgroundImage:
+            'linear-gradient(to bottom, rgba(4, 7, 14, 0.65) 0%, rgba(4, 7, 14, 0.85) 100%), url(/Moonshot-photo-Anja-from-Pixabay.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+
       {/* Decorative Orbs (parallax on cursor) */}
       <motion.div style={{ position: 'absolute', top: '-20%', right: '-15%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, x: orbX, y: orbY }} />
       <motion.div style={{ position: 'absolute', bottom: '-20%', left: '-15%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, x: orb2X, y: orb2Y }} />
