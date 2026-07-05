@@ -638,3 +638,7 @@ h6 {
   --tw-gradient-from: rgba(255, 255, 255, 0.05);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 255, 255, 0));
 }
+@keyframes heroFadeUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
