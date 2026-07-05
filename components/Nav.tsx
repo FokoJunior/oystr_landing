@@ -18,6 +18,12 @@ export default function Nav() {
     const { theme, toggleTheme } = useTheme();
     const [open, setOpen] = useState(false);
 
+    // La landing page a sa propre barre de navigation intégrée.
+    if (
+      pathname === '/landing' || pathname.startsWith('/landing/') ||
+      pathname === '/about' || pathname === '/contact'
+    ) return null;
+
     // The Coming Soon landing (root) keeps its own dark, full-viewport identity —
     // the nav floats over it in a matching dark-glass style regardless of the global theme.
     const forceDark = pathname === '/';
