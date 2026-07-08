@@ -3,14 +3,16 @@ import nodemailer from 'nodemailer';
 export const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT),
-    secure: true, // port 465 = SSL
+    secure: Number(process.env.SMTP_PORT) === 465,
+    authMethod: 'LOGIN',
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
     },
+    tls: { rejectUnauthorized: false },
 });
 
-export const FROM = process.env.SMTP_FROM || '"Oystr" <oystr@bmptravel.com>';
+export const FROM = process.env.SMTP_FROM || '"Oystr" <info@oystr.ca>';
 
 // ── Email Templates ──────────────────────────────────────────────────────────
 

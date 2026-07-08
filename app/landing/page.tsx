@@ -485,37 +485,107 @@ function LandingContent() {
       </section>
 
       {/* ░░ WHO IT'S FOR ░░ */}
-      <section id="who" style={{ ...shell, padding: sectionPad('40px 40px 80px', '32px 20px 48px') }}>
-        <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '0.9fr 1.1fr', gap: mobile ? 32 : 60, alignItems: 'center' }}>
-          <div
-            style={{
-              display: 'block', width: '100%', borderRadius: 22,
-              border: `1px solid ${P.border}`, overflow: 'hidden',
-            }}
-          >
-            <img
-              src="/landing/1%20(3).jpeg"
-              alt="Someone mid-dream"
-              style={{ width: '100%', height: 'auto', display: 'block' }}
-            />
-            {/* <div style={{ position: 'absolute', left: 26, bottom: 24, ...mono(11, 'rgba(255,255,255,0.75)') }}>// someone mid-dream</div> */}
-          </div>
-          <div>
-            {/* <div style={eyebrow(P)}><span style={{ color: P.hairline }}>// </span>who it&apos;s for</div> */}
-            <h2 style={{ ...display(mobile ? 32 : 46), margin: '0 0 20px' }}>For the dream you&apos;ve carried for decades.</h2>
-            <p style={{ fontSize: 16, color: P.inkSoft, lineHeight: 1.65, margin: '0 0 28px', maxWidth: 500, textWrap: 'pretty' }}>
-              The novel half-written. The town you left and mean to return to. The instrument, the company, the long walk. Oystr is being built for people with the wisdom to know what matters — and the resolve to finally begin.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {PROOFS.map(p => (
-                <div key={p} style={{ display: 'flex', gap: 13, alignItems: 'flex-start' }}>
-                  <CheckMarkIcon size={18} style={{ color: P.goldDeep, flexShrink: 0, marginTop: 1 }} />
-                  <span style={{ fontSize: 14.5, color: P.ink, lineHeight: 1.5 }}>{p}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+      <section id="who" style={{ ...shell, padding: sectionPad('72px 40px 80px', '48px 20px 56px') }}>
+        {/* Heading */}
+        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 52px' }}>
+          <h2 style={{ ...display(mobile ? 30 : 44), margin: '0 0 16px', textWrap: 'balance' }}>
+            Who Is Oystr For?
+          </h2>
+          <p style={{ fontSize: 16, color: P.inkSoft, lineHeight: 1.7, margin: 0, textWrap: 'pretty' }}>
+            Some people scroll. Others build the life they&apos;ve been dreaming about. Which one are you?
+            Oystr is for people and organizations that want to turn purpose into action, connect with others who share their vision, and make real progress toward meaningful goals.
+          </p>
         </div>
+
+        {/* Cards 2×2 */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: mobile ? '1fr' : 'repeat(2, 1fr)',
+          gap: mobile ? 14 : 18,
+          maxWidth: 820,
+          margin: '0 auto 40px',
+        }}>
+          {([
+            {
+              color: '#3B82F6',
+              bg: 'rgba(59,130,246,0.12)',
+              icon: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+              ),
+              title: 'Change Agents & Dreamers',
+              desc: 'People creating positive change in their communities, industries, and the world. Anyone ready to discover, pursue, and achieve the goals that matter most.',
+            },
+            {
+              color: '#8B5CF6',
+              bg: 'rgba(139,92,246,0.12)',
+              icon: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              ),
+              title: 'Coaches, Mentors & Creators',
+              desc: 'Build engaged communities, inspire action, and help others reach their potential.',
+            },
+            {
+              color: '#EF4444',
+              bg: 'rgba(239,68,68,0.12)',
+              icon: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              ),
+              title: 'Nonprofits & Community Organizations',
+              desc: 'Grow your mission, mobilize supporters, recruit volunteers, and showcase your impact.',
+            },
+            {
+              color: '#C9A84C',
+              bg: 'rgba(201,168,76,0.12)',
+              icon: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2"/>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                </svg>
+              ),
+              title: 'Companies & Teams',
+              desc: 'Strengthen culture, unite employees around meaningful initiatives, encourage innovation, and celebrate shared achievements.',
+            },
+          ] as const).map(card => (
+            <div
+              key={card.title}
+              style={{
+                background: P.surface,
+                border: `1px solid ${P.border}`,
+                borderRadius: 18,
+                padding: mobile ? '22px 20px' : '26px 28px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: card.bg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: card.color, flexShrink: 0,
+              }}>
+                {card.icon}
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: P.ink, lineHeight: 1.3 }}>{card.title}</div>
+              <div style={{ fontSize: 14, color: P.inkSoft, lineHeight: 1.65 }}>{card.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Closing line */}
+        <p style={{ textAlign: 'center', fontSize: 15, color: P.inkSoft, lineHeight: 1.7, maxWidth: 620, margin: '0 auto' }}>
+          Whether you&apos;re launching a business, writing a book, training for a marathon, learning a new skill, or changing your community — Oystr connects you with people who can support your journey.
+        </p>
       </section>
 
       {/* ░░ CLOSING CTA ░░ */}
@@ -524,7 +594,7 @@ function LandingContent() {
           <div style={{ width: 64, height: 64, borderRadius: 20, background: P.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 28px' }}>
             <SparkleTailIcon size={30} style={{ color: dark ? P.gold : '#e7cf8a' }} />
           </div>
-          <h2 style={{ ...display(mobile ? 34 : 56), lineHeight: 1.04, margin: '0 0 18px', textWrap: 'balance' }}>The dream doesn&apos;t get smaller by waiting.</h2>
+          <h2 style={{ ...display(mobile ? 34 : 56), lineHeight: 1.04, margin: '0 0 18px', textWrap: 'balance' }}>Your dream deserves a place in the world, not just in your head.</h2>
           <p style={{ fontSize: 17, color: P.inkSoft, lineHeight: 1.6, margin: '0 0 32px' }}>Be the first to know when we launch. No spam — just one email.</p>
           {notifDone ? (
             <div style={{ fontSize: 16, color: P.goldDeep, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
