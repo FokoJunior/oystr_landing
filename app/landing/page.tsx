@@ -87,25 +87,6 @@ function LandingContent() {
   const [notifDone, setNotifDone] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
 
-  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
-  const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
-  const [contactError, setContactError] = useState('');
-  const handleContact = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (contactStatus === 'sending') return;
-    setContactStatus('sending');
-    setContactError('');
-    try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(contactForm),
-      });
-      const data = await res.json();
-      if (!res.ok) { setContactError(data.error || 'Something went wrong.'); setContactStatus('error'); }
-      else setContactStatus('done');
-    } catch { setContactError('Network error. Please try again.'); setContactStatus('error'); }
-  };
   const handleNotify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!notifEmail || notifLoading) return;
@@ -651,99 +632,6 @@ function LandingContent() {
             </form>
           )}
           {/* <div style={{ ...mono(11.5, P.muted), marginTop: 20 }}>// free to start · 2 public Moonshots · no card required</div> */}
-        </div>
-      </section>
-
-      {/* ░░ CONTACT ░░ */}
-      <section id="contact" style={{ borderTop: `1px solid ${P.borderSoft}`, background: P.surface2 }}>
-        <div style={{ ...shell, padding: sectionPad('80px 40px', '56px 20px') }}>
-          <div style={{ maxWidth: 560, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 40 }}>
-              <div style={{ ...mono(12, P.goldDeep), fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>Contact</div>
-              <h2 style={{ ...display(mobile ? 30 : 42), margin: '0 0 14px', textWrap: 'balance' }}>Have a question?</h2>
-              <p style={{ fontSize: 15, color: P.inkSoft, lineHeight: 1.65, margin: 0 }}>
-                We&apos;d love to hear from you. Send us a message and we&apos;ll get back to you within 24–48 hours.
-              </p>
-            </div>
-
-            {contactStatus === 'done' ? (
-              <div style={{
-                textAlign: 'center', padding: '36px 28px',
-                background: P.surface, border: `1px solid ${P.border}`, borderRadius: 20,
-              }}>
-                <div style={{ fontSize: 36, marginBottom: 14 }}>✓</div>
-                <div style={{ fontSize: 17, fontWeight: 700, color: P.ink, marginBottom: 8 }}>Message sent!</div>
-                <p style={{ fontSize: 14, color: P.inkSoft, margin: '0 0 20px', lineHeight: 1.6 }}>
-                  Thanks for reaching out. We&apos;ll reply to <strong>{contactForm.email}</strong> within 24–48 hours.
-                </p>
-                <button
-                  onClick={() => { setContactStatus('idle'); setContactForm({ name: '', email: '', message: '' }); }}
-                  style={{ fontSize: 13, color: P.inkSoft, background: 'none', border: `1px solid ${P.border}`, borderRadius: 9, padding: '7px 16px', cursor: 'pointer', fontFamily: 'inherit' }}
-                >
-                  Send another message
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleContact} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: 14 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ ...mono(11, P.muted), fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Name</label>
-                    <input
-                      required
-                      value={contactForm.name}
-                      onChange={e => setContactForm(f => ({ ...f, name: e.target.value }))}
-                      placeholder="Your name"
-                      disabled={contactStatus === 'sending'}
-                      style={{ padding: '12px 16px', borderRadius: 12, border: `1px solid ${P.border}`, background: P.surface, color: P.ink, fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ ...mono(11, P.muted), fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Email</label>
-                    <input
-                      type="email"
-                      required
-                      value={contactForm.email}
-                      onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))}
-                      placeholder="your@email.com"
-                      disabled={contactStatus === 'sending'}
-                      style={{ padding: '12px 16px', borderRadius: 12, border: `1px solid ${P.border}`, background: P.surface, color: P.ink, fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
-                    />
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ ...mono(11, P.muted), fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Message</label>
-                  <textarea
-                    required
-                    rows={5}
-                    value={contactForm.message}
-                    onChange={e => setContactForm(f => ({ ...f, message: e.target.value }))}
-                    placeholder="What's on your mind?"
-                    disabled={contactStatus === 'sending'}
-                    style={{ padding: '12px 16px', borderRadius: 12, border: `1px solid ${P.border}`, background: P.surface, color: P.ink, fontSize: 14, outline: 'none', fontFamily: 'inherit', resize: 'vertical', lineHeight: 1.6 }}
-                  />
-                </div>
-                {contactStatus === 'error' && (
-                  <div style={{ fontSize: 13, color: '#EF4444', padding: '10px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                    {contactError}
-                  </div>
-                )}
-                <button
-                  type="submit"
-                  disabled={contactStatus === 'sending'}
-                  style={{
-                    alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '13px 26px', borderRadius: 12,
-                    background: P.ink, color: P.surface, border: 'none',
-                    fontSize: 15, fontWeight: 600, cursor: contactStatus === 'sending' ? 'wait' : 'pointer',
-                    opacity: contactStatus === 'sending' ? 0.7 : 1, fontFamily: 'inherit',
-                  }}
-                >
-                  <SparkleIcon size={15} style={{ color: P.gold }} />
-                  {contactStatus === 'sending' ? 'Sending…' : 'Send message'}
-                </button>
-              </form>
-            )}
-          </div>
         </div>
       </section>
 
