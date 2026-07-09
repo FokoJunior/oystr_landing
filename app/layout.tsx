@@ -15,12 +15,44 @@ const plusJakarta = Plus_Jakarta_Sans({
   variable: '--font-plus-jakarta',
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://oystr.ca';
+
 export const metadata: Metadata = {
-  title: "OYSTR — Bucket List Help",
-  description: "Dreams are the content. The community makes them happen. Launching July 15, 2026.",
+  title: "Oystr — What's on your bucket list?",
+  description: "Declare your dream, find your crew, and make it real. Oystr launches July 15, 2026. Join the waitlist.",
+  metadataBase: new URL(SITE_URL),
+
   icons: {
-    icon: "/favicon.ico", // Note: Need to copy this from main project eventually
-  }
+    icon: [
+      { url: '/logo-favicon.png', type: 'image/png' },
+    ],
+    apple: '/logo-favicon.png',
+  },
+
+  openGraph: {
+    type: 'website',
+    url: SITE_URL,
+    siteName: 'Oystr',
+    title: "Oystr — What's on your bucket list?",
+    description: "Declare your dream, find your crew, and make it real. Oystr launches July 15, 2026. Join the waitlist.",
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1024,
+        height: 1024,
+        alt: "Oystr — What's on your bucket list?",
+      },
+    ],
+    locale: 'en_CA',
+  },
+
+  twitter: {
+    card: 'summary_large_image',
+    site: '@oystr_ca',
+    title: "Oystr — What's on your bucket list?",
+    description: "Declare your dream, find your crew, and make it real. Oystr launches July 15, 2026.",
+    images: ['/og-image.png'],
+  },
 };
 
 export default function RootLayout({

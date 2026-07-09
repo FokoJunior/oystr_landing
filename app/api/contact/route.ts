@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { transporter, FROM, contactAckHtml } from '@/lib/mailer';
 
 export async function POST(req: NextRequest) {
-    let name: string, email: string, message: string;
+    let name: string, email: string, message: string, subject: string;
     try {
         const body = await req.json();
         name    = (body.name    ?? '').trim();
         email   = (body.email   ?? '').trim();
         message = (body.message ?? '').trim();
+        subject = (body.subject ?? '').trim();
     } catch {
         return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
     }
@@ -20,13 +21,14 @@ export async function POST(req: NextRequest) {
     }
 
     const escaped = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br/>');
+    const subjectLine = subject ? `[Contact] ${subject} — ${name}` : `[Contact] New message — ${name}`;
 
     try {
         await transporter.sendMail({
             from: FROM,
             to: process.env.SMTP_USER,
             replyTo: `${name} <${email}>`,
-            subject: `[Contact] New message — ${name}`,
+            subject: subjectLine,
             html: `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"/><title>New Contact Message</title></head>
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="background:#0B1729;border-radius:16px 16px 0 0;padding:28px 40px;text-align:center;">
             <img src="https://oystr.ca/logo-blanc.png" alt="Oystr" height="32" style="display:block;margin:0 auto 8px;height:32px;max-width:120px;object-fit:contain;"/>
-            <div style="font-size:11px;color:#4A5870;font-family:monospace;">New contact message · oystr.ca</div>
+            <div style="font-size:11px;color:#8898B3;font-family:monospace;">New contact message · oystr.ca</div>
           </td>
         </tr>
         <tr>
@@ -46,6 +48,7 @@ export async function POST(req: NextRequest) {
               <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8898B3;margin-bottom:4px;">From</div>
               <div style="font-size:15px;color:#0B1632;font-weight:600;">${name}</div>
               <div style="font-size:13px;color:#4A5870;">${email}</div>
+              ${subject ? `<div style="font-size:12px;color:#8898B3;margin-top:4px;">Subject: ${subject}</div>` : ''}
             </div>
             <div style="width:36px;height:2px;background:#C9A84C;border-radius:2px;margin-bottom:20px;"></div>
             <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8898B3;margin-bottom:10px;">Message</div>
@@ -54,7 +57,8 @@ export async function POST(req: NextRequest) {
         </tr>
         <tr>
           <td style="background:#0B1729;border-radius:0 0 16px 16px;padding:20px 40px;text-align:center;">
-            <p style="margin:0;font-size:11px;color:#4A5870;font-family:monospace;">Oystr · oystr.ca · St. Catharines, ON</p>
+            <p style="margin:0 0 4px;font-size:11px;color:#8898B3;font-family:monospace;">Oystr · oystr.ca · St. Catharines, ON</p>
+            <p style="margin:0;font-size:11px;color:#6B7FA3;">© 2026 Closure Solutions Ltd. All rights reserved.</p>
           </td>
         </tr>
       </table>
@@ -73,7 +77,7 @@ export async function POST(req: NextRequest) {
         from: FROM,
         to: email,
         subject: 'We received your message — Oystr',
-        html: contactAckHtml({ name, message }),
+        html: contactAckHtml({ name, message, subject: subject || undefined }),
     }).catch(err => console.error('[contact] Ack error:', err));
 
     return NextResponse.json({ message: 'Message sent successfully!' });
