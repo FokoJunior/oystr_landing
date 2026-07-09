@@ -74,10 +74,10 @@ export function confirmationEmail(email: string, firstName = '') {
         <!-- Footer -->
         <tr>
           <td style="background:#0B1729;border-radius:0 0 16px 16px;padding:24px 40px;text-align:center;">
-            <p style="margin:0 0 6px;font-size:11px;color:#4A5870;font-family:monospace;">
+            <p style="margin:0 0 6px;font-size:11px;color:#8898B3;font-family:monospace;">
               Oystr · oystr.ca · St. Catharines, ON
             </p>
-            <p style="margin:0;font-size:11px;color:#2A3A57;">
+            <p style="margin:0;font-size:11px;color:#6B7FA3;">
               © 2026 Closure Solutions Ltd. All rights reserved.
             </p>
           </td>
@@ -89,6 +89,69 @@ export function confirmationEmail(email: string, firstName = '') {
 </body>
 </html>`,
     };
+}
+
+export function contactAckHtml({ name, message }: { name: string; message: string }) {
+    const escaped = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br/>');
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>We received your message</title>
+</head>
+<body style="margin:0;padding:0;background:#F2F5FC;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F5FC;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#0B1729;border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
+            <img src="https://oystr.ca/logo-blanc.png" alt="Oystr" height="36" style="display:block;margin:0 auto 10px;height:36px;max-width:140px;object-fit:contain;"/>
+            <div style="font-size:12px;color:#4A5870;font-family:monospace;">oystr.ca</div>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="background:#ffffff;padding:40px 40px 32px;border-left:1px solid #E2E8F0;border-right:1px solid #E2E8F0;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8898B3;margin-bottom:12px;">Message reçu</div>
+            <h1 style="margin:0 0 20px;font-size:26px;font-weight:800;color:#0B1632;letter-spacing:-0.02em;line-height:1.2;">
+              Thanks, ${name}!
+            </h1>
+            <div style="width:36px;height:3px;background:#C9A84C;border-radius:2px;margin-bottom:24px;"></div>
+            <p style="margin:0 0 20px;font-size:15px;color:#4A5870;line-height:1.7;">
+              We've received your message and will get back to you as soon as possible. Our team typically responds within 24–48 hours.
+            </p>
+            <div style="background:#F8FAFF;border:1px solid #E2E8F0;border-radius:12px;padding:18px 22px;margin-bottom:28px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8898B3;margin-bottom:10px;">Your message</div>
+              <p style="margin:0;font-size:14px;color:#4A5870;line-height:1.7;">${escaped}</p>
+            </div>
+            <p style="margin:0;font-size:13px;color:#8898B3;line-height:1.6;">
+              In the meantime, feel free to explore what Oystr has to offer.<br/>
+              — The Oystr Team
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#0B1729;border-radius:0 0 16px 16px;padding:24px 40px;text-align:center;">
+            <p style="margin:0 0 6px;font-size:11px;color:#8898B3;font-family:monospace;">
+              Oystr · oystr.ca · St. Catharines, ON
+            </p>
+            <p style="margin:0;font-size:11px;color:#6B7FA3;">
+              © 2026 Closure Solutions Ltd. All rights reserved.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 }
 
 export function launchEmail(email: string) {
@@ -155,10 +218,10 @@ export function launchEmail(email: string) {
         <!-- Footer -->
         <tr>
           <td style="background:#0B1729;border-radius:0 0 16px 16px;padding:24px 40px;text-align:center;">
-            <p style="margin:0 0 6px;font-size:11px;color:#4A5870;font-family:monospace;">
+            <p style="margin:0 0 6px;font-size:11px;color:#8898B3;font-family:monospace;">
               Oystr · oystr.ca · St. Catharines, ON
             </p>
-            <p style="margin:0;font-size:11px;color:#2A3A57;">
+            <p style="margin:0;font-size:11px;color:#6B7FA3;">
               © 2026 Closure Solutions Ltd. All rights reserved.
             </p>
           </td>
