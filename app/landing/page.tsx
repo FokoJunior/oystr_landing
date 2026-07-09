@@ -98,6 +98,12 @@ function LandingContent() {
   };
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef   = useRef<number>(0);
@@ -189,7 +195,7 @@ function LandingContent() {
   const signalsReveal = useReveal<HTMLDivElement>({ selector: ':scope > *', stagger: 0.07, y: 16 });
 
   return (
-    <div style={{ background: P.bg, color: P.ink, minHeight: '100vh', fontFamily: FONT.body, overflowX: 'clip' }}>
+    <div style={{ background: P.bg, color: P.ink, minHeight: '100vh', fontFamily: FONT.body, overflowX: 'hidden' }}>
       <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999 }} />
 
       {/* ░░ NAV ░░ */}
@@ -668,6 +674,28 @@ function LandingContent() {
           <span style={mono(11, P.faint)}>made for the brave</span>
         </div>
       </footer>
+
+      {/* ░░ SCROLL TO TOP ░░ */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Back to top"
+          style={{
+            position: 'fixed', bottom: 28, right: 24, zIndex: 40,
+            width: 44, height: 44, borderRadius: 14,
+            background: P.ink, color: P.surface,
+            border: `1px solid ${P.border}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', boxShadow: P.cardShadow,
+            transition: 'opacity 200ms, transform 200ms',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 12V4M4 8l4-4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      )}
 
       {/* keyframes for the floating hero cards */}
       <style>{`
