@@ -6,11 +6,12 @@ export async function POST(req: NextRequest) {
     try {
         const { email, firstName } = await req.json();
 
-        if (!email || typeof email !== 'string' || !email.includes('@')) {
+        const emailStr = (typeof email === 'string' ? email : '').trim().toLowerCase();
+        if (!emailStr || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr) || emailStr.includes('..')) {
             return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
         }
 
-        const { added, already } = await addSubscriber(email);
+        const { added, already } = await addSubscriber(emailStr);
 
         if (already) {
             return NextResponse.json({ message: 'Already on the list!', already: true });
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
 
         // Fire-and-forget — don't block the response on email delivery
         transporter
-            .sendMail(confirmationEmail(email.trim().toLowerCase(), typeof firstName === 'string' ? firstName.trim() : ''))
+            .sendMail(confirmationEmail(emailStr, typeof firstName === 'string' ? firstName.trim() : ''))
             .catch((err) => console.error('[subscribe] Confirmation email failed:', err));
 
         return NextResponse.json({ message: 'Subscribed successfully!', added: true });
