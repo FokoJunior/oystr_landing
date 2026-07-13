@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     description: "Declare your dream, find your crew, and make it real. Oystr launches July 15, 2026. Join the waitlist.",
     images: [
       {
-        url: '/og-image.png',
+        url: '/og-image.jpeg',
         width: 1024,
         height: 1024,
         alt: "Oystr — What's on your bucket list?",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     site: '@oystr_ca',
     title: "Oystr — What's on your bucket list?",
     description: "Declare your dream, find your crew, and make it real. Oystr launches July 15, 2026.",
-    images: ['/og-image.png'],
+    images: ['/og-image.jpeg'],
   },
 };
 
