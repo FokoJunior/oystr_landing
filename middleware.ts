@@ -17,6 +17,7 @@ export function middleware(request: NextRequest) {
             pathname.startsWith('/home') ||
             pathname.startsWith('/about') ||
             pathname.startsWith('/contact') ||
+            pathname.startsWith('/landing') ||
             pathname.includes('.')
         ) {
             return NextResponse.next();
