@@ -1,6 +1,10 @@
 // Mock content for the OYSTR marketing landing page.
 // Transcribed 1:1 from "OYSTR Landing.dc.html" (renderVals + sc-for lists).
 
+// The product app (auth, feed, moonshots...) is a separate deployment from
+// this marketing site — every in-app link below points there.
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.oystr.ca';
+
 export type Step = { num: string; icon: 'pen' | 'users' | 'flag'; title: string; body: string };
 export type Signal = { name: string; icon: 'star' | 'crew' | 'fuel' | 'orbit' | 'echo' | 'log'; desc: string };
 export type Dream = {
@@ -60,12 +64,12 @@ export const PRICING: PlanTier[] = [
       'Appear in Dream Charts',
     ],
     cta: 'Start free',
-    href: '/launch',
+    href: `${APP_URL}/launch`,
   },
   {
     name: 'Verified',
     price: '$5',
-    period: 'one-time',
+    period: '/ month',
     blurb: 'Stand out, unlock cash Fuel, and reach more backers.',
     features: [
       'Everything in Dreamer',
@@ -75,7 +79,7 @@ export const PRICING: PlanTier[] = [
       'Receive cash Fuel from backers',
     ],
     cta: 'Get Verified',
-    href: '/subscriptions',
+    href: `${APP_URL}/subscriptions`,
     featured: true,
   },
   {
@@ -90,7 +94,7 @@ export const PRICING: PlanTier[] = [
       'Advanced analytics dashboard',
     ],
     cta: 'See partner plans',
-    href: '/subscriptions',
+    href: `${APP_URL}/subscriptions`,
   },
 ];
 
@@ -107,10 +111,22 @@ export const HERO_STATS: { value: number; suffix: string; label: string; gold?: 
 ];
 
 export const FOOTER_COLS: FooterCol[] = [
+  { head: 'Product', links: [
+    { label: 'Feed', href: `${APP_URL}/feed` },
+    { label: 'Explore', href: `${APP_URL}/explore` },
+    { label: 'Launch', href: `${APP_URL}/launch` },
+    { label: 'Blog', href: `${APP_URL}/blog` },
+    { label: 'Pricing', href: `${APP_URL}/subscriptions` },
+  ] },
+  { head: 'Account', links: [
+    { label: 'Profile', href: `${APP_URL}/profile` },
+    { label: 'Messages', href: `${APP_URL}/messages` },
+    { label: 'Notifications', href: `${APP_URL}/notifications` },
+    { label: 'Settings', href: `${APP_URL}/settings` },
+  ] },
   { head: 'Company', links: [
-    { label: 'About', href: '/about' },
-    { label: 'Contact', href: '/contact' },
-    { label: 'Privacy Policy', href: '/legal/privacy' },
-    { label: 'Terms of Service', href: '/legal/terms' },
+    { label: 'Help Center', href: `${APP_URL}/help` },
+    { label: 'Privacy Policy', href: `${APP_URL}/legal/privacy` },
+    { label: 'Terms of Service', href: `${APP_URL}/legal/terms` },
   ] },
 ];

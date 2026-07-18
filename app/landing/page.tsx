@@ -1,10 +1,10 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { useState, useEffect, type CSSProperties, type ReactNode } from 'react';
 import { FONT, radius, type Palette } from '../_shared/theme';
-import { ThemeProvider, useTheme } from '../_shared/ThemeContext';
+import { useTheme } from '../_shared/ThemeContext';
 import Logo from '../_shared/Logo';
-import { useReveal } from '../_shared/useGsap';
+import { useReveal, useScrollReveal } from '../_shared/useGsap';
 import { useIsMobile } from '../_shared/useIsMobile';
 import {
   MoonIcon, SunIcon,
@@ -14,10 +14,38 @@ import {
   PenIcon, UsersIcon, FlagIcon, LogIcon,
   SparkleIcon, SparkleTailIcon, CheckMarkIcon, ClockMiniIcon,
 } from './icons';
+import { Counter } from './Counter';
 import {
-  STEPS, SIGNALS, PROOFS, HERO_CREW, FOOTER_COLS,
+  STEPS, SIGNALS, PROOFS, DREAMS, HERO_CREW, HERO_STATS, FOOTER_COLS, PRICING, APP_URL,
   type Step, type Signal,
 } from './data';
+
+type TopMoonshot = {
+  id: string;
+  title: string;
+  handle: string;
+  categories: string[];
+  image_url: string | null;
+  stars: number;
+  comments: number;
+  crew_total: number;
+  crew_verified: number;
+  days_left: number;
+  user: { name: string; handle: string; verified: boolean; avatar_color: string; image: string | null };
+};
+
+const CATEGORY_BANNER: Record<string, string> = {
+  TRAVEL:        'linear-gradient(135deg,#1a2f4e,#0a1124)',
+  EDUCATION:     'linear-gradient(135deg,#2a2620,#15140f)',
+  CAREER:        'linear-gradient(135deg,#1f2d1a,#0f150a)',
+  HEALTH:        'linear-gradient(135deg,#1a2e2a,#0a1510)',
+  RELATIONSHIPS: 'linear-gradient(135deg,#2e1a2a,#150a12)',
+  ARTS:          'linear-gradient(135deg,#3a2b1f,#15140f)',
+  BUSINESS:      'linear-gradient(135deg,#1a1f2e,#0a0f1e)',
+  ENVIRONMENT:   'linear-gradient(135deg,#1f3a26,#15140f)',
+  WELLNESS:      'linear-gradient(135deg,#2a1f35,#120a1a)',
+  CHARITY:       'linear-gradient(135deg,#3a2020,#1a0a0a)',
+};
 
 
 const SHELL: CSSProperties = { maxWidth: 1200, margin: '0 auto', padding: '0 40px' };
@@ -46,9 +74,27 @@ function Hover({ children, hoverStyle, baseStyle, as = 'div', ...rest }: {
 }
 
 const STEP_ICON: Record<Step['icon'], typeof PenIcon> = { pen: PenIcon, users: UsersIcon, flag: FlagIcon };
+const STEP_IMAGE: Record<string, string> = { '01': '/landing/01.jpeg', '02': '/landing/02.jpeg', '03': '/landing/03.jpeg' };
 const SIGNAL_ICON: Record<Signal['icon'], typeof StarIcon> = {
   star: StarIcon, crew: CrewIcon, fuel: FuelIcon, orbit: OrbitIcon, echo: EchoIcon, log: LogIcon,
 };
+
+function inpStyle(P: Palette, focused = false): CSSProperties {
+  return {
+    background: focused ? P.surface : P.surface2,
+    border: `1px solid ${focused ? P.gold : P.borderStrong}`,
+    boxShadow: focused ? `0 0 0 3px ${P.goldBg}` : 'none',
+    color: P.ink,
+    borderRadius: 10,
+    padding: '10px 14px',
+    fontSize: 14,
+    fontFamily: 'inherit',
+    width: '100%',
+    outline: 'none',
+    transition: 'border-color 0.18s, box-shadow 0.18s, background 0.18s',
+    boxSizing: 'border-box',
+  };
+}
 
 function NavLink({ href, children, P, active }: { href: string; children: ReactNode; P: Palette; active?: boolean }) {
   return (
@@ -56,19 +102,21 @@ function NavLink({ href, children, P, active }: { href: string; children: ReactN
       as="a"
       href={href}
       baseStyle={{
-        fontSize: 14, textDecoration: 'none', transition: 'color 160ms',
+        fontSize: 14,
         color: active ? P.ink : P.inkSoft,
         fontWeight: active ? 600 : 400,
+        textDecoration: 'none',
+        transition: 'color 160ms',
         position: 'relative',
+        paddingBottom: 4,
       }}
       hoverStyle={{ color: P.ink }}
     >
       {children}
       {active && (
         <span style={{
-          position: 'absolute', bottom: -4, left: 0, right: 0,
-          height: 2, borderRadius: 2,
-          background: P.goldDeep,
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          height: 2, borderRadius: 2, background: P.goldDeep,
         }} />
       )}
     </Hover>
@@ -76,111 +124,50 @@ function NavLink({ href, children, P, active }: { href: string; children: ReactN
 }
 
 export default function LandingPage() {
-  return <ThemeProvider><LandingContent /></ThemeProvider>;
-}
-
-function LandingContent() {
   const { palette: P, dark, toggle } = useTheme();
   const mobile = useIsMobile();
 
-  const [notifEmail, setNotifEmail] = useState('');
-  const [notifDone, setNotifDone] = useState(false);
-  const [notifLoading, setNotifLoading] = useState(false);
-
-  const handleNotify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!notifEmail || notifLoading) return;
-    setNotifLoading(true);
-    try {
-      await fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: notifEmail }) });
-      setNotifDone(true);
-    } catch { /* ignore */ } finally { setNotifLoading(false); }
-  };
-
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [topMoonshots, setTopMoonshots] = useState<TopMoonshot[] | null>(null);
+  const [activeSection, setActiveSection] = useState<string>('');
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+  const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [contactError, setContactError] = useState('');
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
   useEffect(() => {
-    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    const sectionIds = ['how', 'signals', 'who', 'pricing', 'contact'];
+    const OFFSET = 100; // navbar height + buffer
+
+    const calcActive = () => {
+      const scrollY = window.scrollY;
+      let current = '';
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top + scrollY - OFFSET <= scrollY) {
+          current = id;
+        }
+      }
+      setActiveSection(current);
+    };
+
+    const onScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+      calcActive();
+    };
+
+    calcActive(); // init on mount
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef   = useRef<number>(0);
-
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   useEffect(() => {
-    const target = new Date('2026-07-15T00:00:00').getTime();
-    const tick = () => {
-      const diff = Math.max(0, target - Date.now());
-      setCountdown({
-        days: Math.floor(diff / 86400000),
-        hours: Math.floor((diff % 86400000) / 3600000),
-        minutes: Math.floor((diff % 3600000) / 60000),
-        seconds: Math.floor((diff % 60000) / 1000),
-      });
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
+    fetch('/api/moonshots/top?limit=3')
+      .then(r => r.json())
+      .then(d => { setTopMoonshots(d.moonshots ?? []); })
+      .catch(() => { setTopMoonshots([]); });
   }, []);
-
-  useEffect(() => {
-    if (!notifDone) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const COLORS = ['#e7cf8a','#f5e6a3','#c9a74a','#ffffff','#a78bfa','#34D399','#f87171','#38BDF8'];
-    type P = { x:number; y:number; vx:number; vy:number; color:string; size:number; alpha:number; decay:number; rect:boolean };
-    const pts: P[] = [];
-
-    const burst = (bx: number, by: number, n = 70) => {
-      for (let i = 0; i < n; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const s = Math.random() * 10 + 2;
-        pts.push({ x: bx, y: by, vx: Math.cos(a)*s, vy: Math.sin(a)*s - Math.random()*4,
-          color: COLORS[Math.floor(Math.random()*COLORS.length)],
-          size: Math.random()*5+2, alpha: 1, decay: Math.random()*0.012+0.006,
-          rect: Math.random() > 0.55 });
-      }
-    };
-
-    const W = canvas.width, H = canvas.height;
-    burst(W*0.5, H*0.42, 90);
-    const t = [
-      setTimeout(() => burst(W*0.25, H*0.35, 65), 220),
-      setTimeout(() => burst(W*0.75, H*0.35, 65), 380),
-      setTimeout(() => burst(W*0.38, H*0.55, 55), 520),
-      setTimeout(() => burst(W*0.62, H*0.28, 55), 680),
-      setTimeout(() => burst(W*0.5,  H*0.4,  45), 850),
-      setTimeout(() => burst(W*0.15, H*0.5,  40), 1000),
-      setTimeout(() => burst(W*0.85, H*0.45, 40), 1100),
-    ];
-
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
-      for (let i = pts.length-1; i >= 0; i--) {
-        const p = pts[i];
-        p.x += p.vx; p.y += p.vy;
-        p.vy += 0.18; p.vx *= 0.97;
-        p.alpha -= p.decay;
-        if (p.alpha <= 0) { pts.splice(i,1); continue; }
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
-        if (p.rect) { ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size*0.55); }
-        else { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); }
-      }
-      ctx.globalAlpha = 1;
-      if (pts.length > 0) animRef.current = requestAnimationFrame(draw);
-    };
-    draw();
-
-    return () => { cancelAnimationFrame(animRef.current); t.forEach(clearTimeout); };
-  }, [notifDone]);
 
   const shell: CSSProperties = mobile ? { ...SHELL, padding: '0 20px' } : SHELL;
   const sectionPad = (desktopPad: string, mobilePad: string) => (mobile ? mobilePad : desktopPad);
@@ -191,12 +178,23 @@ function LandingContent() {
   });
 
   /* scroll-reveal hooks for the lower sections */
-  const stepsReveal = useReveal<HTMLDivElement>({ selector: ':scope > *', stagger: 0.1, y: 20 });
-  const signalsReveal = useReveal<HTMLDivElement>({ selector: ':scope > *', stagger: 0.07, y: 16 });
+  const stepsReveal    = useReveal<HTMLDivElement>({ selector: ':scope > *', stagger: 0.1,  y: 20 });
+  const signalsReveal  = useReveal<HTMLDivElement>({ selector: ':scope > *', stagger: 0.07, y: 16 });
+  const dreamsReveal   = useReveal<HTMLDivElement>({ selector: ':scope > *', stagger: 0.1,  y: 22 });
+  const pricingReveal  = useReveal<HTMLDivElement>({ selector: ':scope > *', stagger: 0.08, y: 18 });
+
+  /* IntersectionObserver-based reveal for sections/headings */
+  const trustReveal      = useScrollReveal();
+  const howHeadReveal    = useScrollReveal();
+  const whoHeadReveal    = useScrollReveal();
+  const whoCardsReveal   = useScrollReveal();
+  const dreamsHeadReveal = useScrollReveal();
+  const proofReveal      = useScrollReveal();
+  const pricingHeadReveal= useScrollReveal();
+  const contactReveal    = useScrollReveal();
 
   return (
-    <div style={{ background: P.bg, color: P.ink, minHeight: '100vh', fontFamily: FONT.body, overflowX: 'hidden' }}>
-      <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999 }} />
+    <div style={{ background: P.bg, color: P.ink, minHeight: '100vh', fontFamily: FONT.body, overflowX: 'clip' }}>
 
       {/* ░░ NAV ░░ */}
       <header
@@ -211,12 +209,32 @@ function LandingContent() {
           <Brand dot={38} />
           {!mobile && (
             <nav style={{ display: 'flex', alignItems: 'center', gap: 36 }}>
-              <NavLink href="/landing" P={P} active>Home</NavLink>
-              <NavLink href="/about"   P={P}>About</NavLink>
-              <NavLink href="/contact" P={P}>Contact</NavLink>
+              <NavLink href="#how"     P={P} active={activeSection === 'how'}>How it works</NavLink>
+              <NavLink href="#signals" P={P} active={activeSection === 'signals'}>The signals</NavLink>
+              <NavLink href="#who"     P={P} active={activeSection === 'who'}>Who it&apos;s for</NavLink>
+              <NavLink href="#pricing" P={P} active={activeSection === 'pricing'}>Pricing</NavLink>
+              <NavLink href="#contact" P={P} active={activeSection === 'contact'}>Contact</NavLink>
+              {/* séparateur : ancres de page ↑ / vraies pages ↓ */}
+              <span aria-hidden style={{ width: 1, height: 16, background: P.borderStrong, opacity: 0.7 }} />
+              <NavLink href={`${APP_URL}/blog`} P={P}>Blog</NavLink>
+              <NavLink href={`${APP_URL}/help`} P={P}>Help</NavLink>
             </nav>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: mobile ? 10 : 14 }}>
+            {!mobile && (
+              <Link href={`${APP_URL}/auth`} style={{ fontSize: 14, fontWeight: 500, color: P.ink, textDecoration: 'none' }}>Sign in</Link>
+            )}
+            <Hover
+              as="a"
+              href={`${APP_URL}/auth?mode=signup`}
+              baseStyle={{
+                display: 'flex', alignItems: 'center', gap: 7, padding: '10px 17px', borderRadius: 11,
+                background: P.ink, color: P.surface, textDecoration: 'none', fontSize: 13.5, fontWeight: 600, transition: 'opacity 160ms',
+              }}
+              hoverStyle={{ opacity: 0.9 }}
+            >
+              Sign up
+            </Hover>
             <Hover
               as="div"
               role="button"
@@ -230,196 +248,166 @@ function LandingContent() {
             >
               {dark ? <SunIcon size={16} /> : <MoonIcon size={16} />}
             </Hover>
-            {mobile && (
-              <Hover
-                as="div"
-                role="button"
-                aria-label="Menu"
-                onClick={() => setMenuOpen(o => !o)}
-                baseStyle={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${P.pillBorder}`, color: P.inkSoft, cursor: 'pointer', transition: 'border-color 160ms, color 160ms' }}
-                hoverStyle={{ border: `1px solid ${P.pillBorderHover}`, color: P.ink }}
-              >
-                <svg width={18} height={18} viewBox="0 0 18 18" fill="none">
-                  {menuOpen ? (
-                    <>
-                      <line x1="4" y1="4" x2="14" y2="14" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round"/>
-                      <line x1="14" y1="4" x2="4" y2="14" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round"/>
-                    </>
-                  ) : (
-                    <>
-                      <line x1="3" y1="5"  x2="15" y2="5"  stroke="currentColor" strokeWidth={1.7} strokeLinecap="round"/>
-                      <line x1="3" y1="9"  x2="15" y2="9"  stroke="currentColor" strokeWidth={1.7} strokeLinecap="round"/>
-                      <line x1="3" y1="13" x2="15" y2="13" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round"/>
-                    </>
-                  )}
-                </svg>
-              </Hover>
-            )}
           </div>
         </div>
       </header>
 
-      {/* Mobile menu */}
-      {mobile && menuOpen && (
-        <>
-          <div
-            onClick={() => setMenuOpen(false)}
-            style={{ position: 'fixed', inset: 0, zIndex: 48, background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(2px)' }}
-          />
-          <nav style={{
-            position: 'fixed', top: 66, left: 12, right: 12, zIndex: 49,
-            background: dark ? 'rgba(15,23,40,0.97)' : 'rgba(255,255,255,0.97)',
-            border: `1px solid ${P.border}`, borderRadius: 16,
-            padding: '8px', boxShadow: P.cardShadow,
-            backdropFilter: 'blur(16px)',
-          }}>
-            {([
-              { label: 'Home',    href: '/landing' },
-              { label: 'About',   href: '/about' },
-              { label: 'Contact', href: '/contact' },
-            ]).map(({ label, href }) => (
-              <a key={href} href={href} onClick={() => setMenuOpen(false)} style={{
-                display: 'block', padding: '12px 16px', borderRadius: 10,
-                fontSize: 15, fontWeight: href === '/landing' ? 600 : 400,
-                color: href === '/landing' ? P.ink : P.inkSoft,
-                textDecoration: 'none', fontFamily: FONT.body,
-                transition: 'background 120ms',
-              }}>
-                {label}
-              </a>
-            ))}
-          </nav>
-        </>
-      )}
-
       {/* spacer for fixed navbar */}
       <div style={{ height: mobile ? 58 : 70 }} />
 
-      {/* ░░ HERO — COMING SOON ░░ */}
-      <section style={{ ...shell, padding: sectionPad('100px 40px 90px', '60px 20px 56px'), textAlign: 'center' }}>
-        {/* Launch badge */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, ...heroAnim(0.05),
-          background: P.goldBg, border: `1px solid rgba(156,123,54,0.28)`, borderRadius: 999,
-          padding: '6px 16px', marginBottom: 32,
-        }}>
-          <SparkleIcon size={13} style={{ color: P.goldDeep }} />
-          <span style={{ ...mono(12, P.goldDeep), fontWeight: 600, letterSpacing: '0.04em' }}>LAUNCHING JULY 15, 2026</span>
-        </div>
-
-        <h1 style={{ ...display(mobile ? 42 : 80), lineHeight: 1.01, textWrap: 'balance', margin: '0 auto 24px', maxWidth: 820, ...heroAnim(0.12) }}>
-          What&apos;s on your bucket list?
-        </h1>
-        <p style={{ fontSize: mobile ? 16 : 18, lineHeight: 1.65, color: P.inkSoft, margin: '0 auto 40px', maxWidth: 560, textWrap: 'pretty', ...heroAnim(0.2) }}>
-          Be among the first to discover Oystr. Join the waitlist today.
-        </p>
-
-        {/* Countdown */}
-        <div style={{ width: '100%', maxWidth: 560, margin: '0 auto 52px', ...heroAnim(0.26) }}>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: mobile ? 0 : 0 }}>
-            {([
-              { label: 'DAYS', value: countdown.days },
-              { label: 'HRS',  value: countdown.hours },
-              { label: 'MIN',  value: countdown.minutes },
-              { label: 'SEC',  value: countdown.seconds },
-            ] as const).map(({ label, value }, i) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'stretch', flex: 1 }}>
-                {i > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: mobile ? 14 : 18 }}>
-                    <div style={{ width: 1, flex: 1, background: P.borderSoft }} />
+      {/* ░░ HERO ░░ */}
+      <section
+        style={{
+          ...shell, padding: sectionPad('80px 40px 70px', '40px 20px 48px'), display: 'grid',
+          gridTemplateColumns: mobile ? '1fr' : '1.05fr 0.95fr', gap: mobile ? 40 : 64, alignItems: 'center',
+        }}
+      >
+        <div>
+          <div style={{ ...mono(12.5, P.muted), marginBottom: 22, ...heroAnim(0.05) }}>
+            {/* <span style={{ color: P.hairline }}>// </span>the bucket list, reimagined */}
+          </div>
+          <h1 style={{ ...display(mobile ? 38 : 72), lineHeight: 1.02, textWrap: 'balance', ...heroAnim(0.14) }}>
+            Some dreams are<br />too big to chase<br />alone.
+          </h1>
+          <p style={{ fontSize: 17, lineHeight: 1.6, color: P.inkSoft, margin: '26px 0 0', maxWidth: 468, textWrap: 'pretty', ...heroAnim(0.23) }}>
+            Oystr is where grown-up dreams become real. Declare the thing you&apos;ve always meant to do — then watch a crew of people gather to help you actually do it.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 34, flexWrap: 'wrap', ...heroAnim(0.32) }}>
+            <Hover
+              as="a"
+              href={`${APP_URL}/launch`}
+              baseStyle={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '15px 24px', borderRadius: 13,
+                background: P.ink, color: P.surface, textDecoration: 'none', fontSize: 15, fontWeight: 600, transition: 'opacity 160ms',
+              }}
+              hoverStyle={{ opacity: 0.9 }}
+            >
+              <SparkleIcon size={17} style={{ color: P.gold }} />
+              Launch your Moonshot
+            </Hover>
+            <Hover
+              as="a"
+              href={`${APP_URL}/explore`}
+              baseStyle={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '15px 22px', borderRadius: 13,
+                background: 'transparent', border: `1px solid ${P.pillBorder}`, color: P.ink,
+                textDecoration: 'none', fontSize: 15, fontWeight: 600, transition: 'border-color 160ms',
+              }}
+              hoverStyle={{ border: `1px solid ${P.pillBorderHover}` }}
+            >
+              Explore dreams
+            </Hover>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: mobile ? 16 : 26, marginTop: 40, flexWrap: 'wrap', ...heroAnim(0.45) }}>
+            {HERO_STATS.map((s, i) => (
+              <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: mobile ? 16 : 26 }}>
+                {i > 0 && <div style={{ width: 1, height: 34, background: P.borderStrong }} />}
+                <div>
+                  <div style={{ ...mono(mobile ? 20 : 24, s.gold ? P.goldDeep : P.ink), fontWeight: 600, letterSpacing: '-0.02em' }}>
+                    <Counter value={s.value} suffix={s.suffix} delay={0.5 + i * 0.08} />
                   </div>
-                )}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: mobile ? '0 8px 12px' : '0 16px 16px' }}>
-                  <span style={{
-                    ...mono(9, P.goldDeep),
-                    letterSpacing: '0.14em', fontWeight: 600, marginBottom: 10,
-                  }}>{label}</span>
-                  <div style={{ width: '100%', height: 1, background: `linear-gradient(90deg, transparent, ${P.goldDeep}66, transparent)`, marginBottom: 10 }} />
-                  <span style={{
-                    fontFamily: FONT.mono,
-                    fontSize: mobile ? 40 : 64,
-                    fontWeight: 800,
-                    color: P.ink,
-                    lineHeight: 1,
-                    letterSpacing: '-0.04em',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}>
-                    {String(value).padStart(2, '0')}
-                  </span>
+                  <div style={{ ...mono(12.5, P.muted), marginTop: 2 }}>{s.label}</div>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Subscription form */}
-        <div style={{ maxWidth: 520, margin: '0 auto', ...heroAnim(0.28) }}>
-          {notifDone ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontSize: 16, color: P.goldDeep, fontWeight: 600 }}>
-              <SparkleIcon size={18} style={{ color: P.gold }} />
-              You&apos;re on the list — see you at launch!
-            </div>
-          ) : (
-            <form onSubmit={handleNotify} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <input
-                type="email"
-                required
-                value={notifEmail}
-                onChange={e => setNotifEmail(e.target.value)}
-                placeholder="your@email.com"
-                style={{
-                  flex: 1, minWidth: 220, padding: '14px 18px', borderRadius: 12,
-                  border: `1px solid ${P.pillBorder}`, background: P.surface, color: P.ink,
-                  fontSize: 15, outline: 'none', fontFamily: 'inherit',
-                }}
-              />
-              <button
-                type="submit"
-                disabled={notifLoading}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '14px 24px', borderRadius: 12,
-                  background: P.ink, color: P.surface, border: 'none', fontSize: 15, fontWeight: 600,
-                  cursor: notifLoading ? 'wait' : 'pointer', opacity: notifLoading ? 0.7 : 1,
-                  fontFamily: 'inherit',
-                }}
-              >
-                <SparkleIcon size={16} style={{ color: P.gold }} />
-                {notifLoading ? 'Sending…' : 'Notify me at launch'}
-              </button>
-            </form>
-          )}
-          <p style={{ ...mono(12, P.muted), marginTop: 14 }}>No spam · one email · unsubscribe anytime</p>
-        </div>
+        {/* hero visual: portrait + floating cards */}
+        <div style={{ position: 'relative', ...heroAnim(0.2, 0.85) }}>
+          <div
+            style={{
+              display: 'block', width: '100%', height: mobile ? 340 : 520, borderRadius: 22,
+              border: `1px solid ${P.border}`, position: 'relative', overflow: 'hidden', background: '#ffffff',
+            }}
+          >
+            <img
+              src="/landing/1%20(2).jpeg"
+              alt="A real dreamer"
+              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+            />
+            {/* <div style={{ position: 'absolute', left: 28, top: 26, ...mono(11, 'rgba(255,255,255,0.7)') }}>// a real dreamer</div> */}
+          </div>
 
-        {/* Crew avatars */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginTop: 48, ...heroAnim(0.36) }}>
-          {HERO_CREW.map((c, i) => (
-            <div key={i} style={{
-              width: 36, height: 36, borderRadius: 10, background: dark ? '#2f2f2b' : P.surface3,
-              border: `2px solid ${P.bg}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              ...mono(11, dark ? '#e7cf8a' : P.goldDeep), fontWeight: 700, marginLeft: i === 0 ? 0 : -10,
-            }}>{c.t}</div>
-          ))}
+          {/* floating Moonshot card */}
+          <div
+            className="hero-float"
+            style={{
+              position: 'absolute', left: -20, bottom: -36, width: 280,
+              background: P.surface, border: `1px solid ${P.border}`, borderRadius: 16,
+              boxShadow: P.cardShadowHover, padding: '16px 18px',
+              animation: 'heroFadeUp 0.6s cubic-bezier(0.215,0.61,0.355,1) both, oyFloat 5s ease-in-out 0.6s infinite',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 11 }}>
+              <div style={{
+                width: 30, height: 30, borderRadius: 8, background: P.surface3, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', ...mono(11, P.inkSoft), fontWeight: 600,
+              }}>MC</div>
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.1, color: P.ink }}>Maya Chen</div>
+                <div style={mono(10, P.muted)}>@mayaexplores</div>
+              </div>
+              <span style={{
+                marginLeft: 'auto', ...mono(8.5, P.goldDeep), letterSpacing: '0.05em',
+                background: P.goldBg, padding: '2px 7px', borderRadius: 4,
+              }}>TRAVEL</span>
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.3, marginBottom: 10, color: P.ink }}>
+              Hike the Camino de Santiago, solo
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+              <span style={mono(10, P.goldDeep)}>41 days left</span>
+              <span style={mono(10, P.inkSoft)}>71%</span>
+            </div>
+            <div style={{ height: 4, borderRadius: 999, background: P.track, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: '71%', background: P.gold, borderRadius: 999 }} />
+            </div>
+          </div>
+
+          {/* floating "joined the crew" chip */}
+          <div
+            className="hero-float"
+            style={{
+              position: 'absolute', right: -22, top: -28, background: P.heroFrom, color: '#ffffff',
+              borderRadius: 13, padding: '13px 16px', boxShadow: P.cardShadowHover,
+              animation: 'heroFadeUp 0.6s cubic-bezier(0.215,0.61,0.355,1) 0.72s both, oyFloat 6s ease-in-out 1.3s infinite',
+            }}
+          >
+            <div style={{ ...mono(10, '#9c9c94'), marginBottom: 3 }}>+18 joined the crew</div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {HERO_CREW.map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 26, height: 26, borderRadius: 7, background: '#2f2f2b',
+                    border: '1.5px solid #15140f', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    ...mono(9, '#e7cf8a'), fontWeight: 600, marginLeft: i === 0 ? 0 : -7,
+                  }}
+                >{c.t}</div>
+              ))}
+            </div>
+          </div>
         </div>
-        <p style={{ ...mono(12, P.muted), marginTop: 14, ...heroAnim(0.42) }}>12,400+ dreamers already on the waitlist</p>
       </section>
 
       {/* ░░ TRUST STRIP ░░ */}
       <section style={{ borderTop: `1px solid ${P.borderSoft}`, borderBottom: `1px solid ${P.borderSoft}`, background: P.surface2 }}>
-        <div style={{ ...shell, padding: sectionPad('24px 40px', '20px 20px'), display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+        <div ref={trustReveal} className="reveal-up" style={{ ...shell, padding: sectionPad('24px 40px', '20px 20px'), display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <CheckMarkIcon size={16} style={{ color: P.goldDeep, flexShrink: 0 }} />
-            <span style={{ fontSize: 14, fontWeight: 600, color: P.ink }}>Real Support. Honest Reach.</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: P.ink }}>Verified Profiles &amp; True Organic Reach</span>
           </div>
           <p style={{ fontSize: 13.5, color: P.inkSoft, margin: 0, maxWidth: 560, lineHeight: 1.55, textWrap: 'pretty' }}>
-            We&apos;re building Oystr around one principle: your reach will be earned through genuine support — never bought, boosted, or manipulated by an algorithm.
+            Oystr never manipulates the algorithm to favour certain dreamers over others — your reach is earned through genuine support, never bought or boosted artificially.
           </p>
         </div>
       </section>
 
       {/* ░░ HOW IT WORKS ░░ */}
-      <section id="how" style={{ ...shell, padding: sectionPad('96px 40px 40px', '56px 20px 32px') }}>
+      <section id="how" style={{ ...shell, padding: sectionPad('96px 40px 40px', '56px 20px 32px'), scrollMarginTop: 80 }}>
         {/* <div style={eyebrow(P)}><span style={{ color: P.hairline }}>// </span>how it works</div> */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 40, flexWrap: 'wrap', marginBottom: 50 }}>
+        <div ref={howHeadReveal} className="reveal-up" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 40, flexWrap: 'wrap', marginBottom: 50 }}>
           <h2 style={{ ...display(mobile ? 32 : 48), maxWidth: 620 }}>From a quiet wish to a thing that actually happens.</h2>
           <p style={{ fontSize: 15, color: P.inkSoft, lineHeight: 1.6, maxWidth: 330, margin: 0 }}>
             No fundraising pitch. No vanity metrics. Just a clear commitment and the people who want to see you reach it.
@@ -430,25 +418,13 @@ function LandingContent() {
             const Icon = STEP_ICON[s.icon];
             return (
               <div key={s.num} style={{ background: P.surface, border: `1px solid ${P.border}`, borderRadius: 18, overflow: 'hidden', boxShadow: P.cardShadow }}>
-                <div style={{
-                  height: 160, position: 'relative', overflow: 'hidden',
-                  background: s.num === '01'
-                    ? `linear-gradient(135deg, ${P.surface3}, ${P.surface2})`
-                    : s.num === '02'
-                    ? `linear-gradient(135deg, ${P.heroFrom}22, ${P.surface2})`
-                    : `linear-gradient(135deg, ${P.goldBg}, ${P.surface2})`,
-                }}>
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: `radial-gradient(180px 180px at 50% 40%, ${P.goldBg}, transparent 70%)`,
-                  }} />
-                  <div style={{
-                    position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: P.goldDeep, opacity: 0.35,
-                  }}>
-                    <Icon size={64} />
-                  </div>
-                  <span style={{ position: 'absolute', right: 16, top: 14, ...mono(11, P.faint) }}>{s.num}</span>
+                <div style={{ height: 160, position: 'relative', overflow: 'hidden' }}>
+                  <img
+                    src={STEP_IMAGE[s.num]}
+                    alt={s.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                  <span style={{ position: 'absolute', right: 16, top: 14, ...mono(11, '#f6f5f1') }}>{s.num}</span>
                 </div>
                 <div style={{ padding: 24 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -466,13 +442,13 @@ function LandingContent() {
       </section>
 
       {/* ░░ THE SIX SIGNALS ░░ */}
-      <section id="signals" style={{ background: P.heroFrom, position: 'relative', overflow: 'hidden' }}>
+      <section id="signals" style={{ background: P.heroFrom, position: 'relative', overflow: 'hidden', scrollMarginTop: 80 }}>
         <div style={{ position: 'absolute', top: -60, right: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,167,74,0.22), transparent 70%)' }} />
         <div style={{ ...shell, padding: sectionPad('80px 40px', '48px 20px'), position: 'relative' }}>
           {/* <div style={{ ...mono(12.5, '#9c9c94'), marginBottom: 14 }}><span style={{ color: '#5b594f' }}>// </span>the language of support</div> */}
           <h2 style={{ ...display(mobile ? 32 : 46), color: '#f6f5f1', margin: '0 0 12px', maxWidth: 680 }}>Six ways to say &ldquo;I&apos;ve got you.&rdquo;</h2>
           <p style={{ fontSize: 15, color: '#9c9c94', lineHeight: 1.6, maxWidth: 560, margin: '0 0 44px' }}>
-            A like is forgettable. On Oystr, every signal will be a deliberate act of backing — visible, meaningful, and built to matter to the people chasing something real.
+            A like is forgettable. On Oystr, every signal is a real act of backing — visible, meaningful, and felt by the dreamer.
           </p>
           <div ref={signalsReveal} style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3,1fr)', gap: 18 }}>
             {SIGNALS.map(g => {
@@ -492,9 +468,9 @@ function LandingContent() {
       </section>
 
       {/* ░░ WHO IT'S FOR ░░ */}
-      <section id="who" style={{ ...shell, padding: sectionPad('72px 40px 80px', '48px 20px 56px') }}>
+      <section id="who" style={{ ...shell, padding: sectionPad('72px 40px 80px', '48px 20px 56px'), scrollMarginTop: 80 }}>
         {/* Heading */}
-        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 52px' }}>
+        <div ref={whoHeadReveal} className="reveal-up" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 52px' }}>
           <h2 style={{ ...display(mobile ? 30 : 44), margin: '0 0 16px', textWrap: 'balance' }}>
             Who Is Oystr For?
           </h2>
@@ -505,7 +481,7 @@ function LandingContent() {
         </div>
 
         {/* Cards 2×2 */}
-        <div style={{
+        <div ref={whoCardsReveal} className="reveal-up" style={{
           display: 'grid',
           gridTemplateColumns: mobile ? '1fr' : 'repeat(2, 1fr)',
           gap: mobile ? 14 : 18,
@@ -563,9 +539,9 @@ function LandingContent() {
               desc: 'Strengthen culture, unite employees around meaningful initiatives, encourage innovation, and celebrate shared achievements.',
             },
           ] as const).map(card => (
-            <div
+            <Hover
               key={card.title}
-              style={{
+              baseStyle={{
                 background: P.surface,
                 border: `1px solid ${P.border}`,
                 borderRadius: 18,
@@ -573,6 +549,13 @@ function LandingContent() {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 12,
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+              }}
+              hoverStyle={{
+                transform: 'translateY(-4px)',
+                boxShadow: P.cardShadowHover,
+                // shorthand (pas `borderColor`) pour ne pas mélanger avec le `border` de baseStyle
+                border: `1px solid ${P.cardBorderHover}`,
               }}
             >
               <div style={{
@@ -585,7 +568,7 @@ function LandingContent() {
               </div>
               <div style={{ fontSize: 15, fontWeight: 700, color: P.ink, lineHeight: 1.3 }}>{card.title}</div>
               <div style={{ fontSize: 14, color: P.inkSoft, lineHeight: 1.65 }}>{card.desc}</div>
-            </div>
+            </Hover>
           ))}
         </div>
 
@@ -595,49 +578,366 @@ function LandingContent() {
         </p>
       </section>
 
+      {/* ░░ DREAMS IN MOTION ░░ */}
+      <section style={{ background: P.surface2, borderTop: `1px solid ${P.borderSoft}` }}>
+        <div style={{ ...shell, padding: sectionPad('80px 40px', '48px 20px') }}>
+          <div ref={dreamsHeadReveal} className="reveal-up" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
+            <div>
+              {/* <div style={eyebrow(P)}><span style={{ color: P.hairline }}>// </span>dreams in motion</div> */}
+              <h2 style={display(mobile ? 32 : 44)}>Real Moonshots, rising right now</h2>
+            </div>
+            <Hover
+              as="a"
+              href={`${APP_URL}/explore`}
+              baseStyle={{ fontSize: 14, fontWeight: 600, color: P.goldDeep, textDecoration: 'none', whiteSpace: 'nowrap', transition: 'color 160ms' }}
+              hoverStyle={{ color: P.ink }}
+            >
+              See the charts →
+            </Hover>
+          </div>
+          <div ref={dreamsReveal} style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3,1fr)', gap: 20 }}>
+            {topMoonshots === null ? (
+              /* skeleton — same grid shape, no data flash */
+              [0, 1, 2].map(i => (
+                <div key={i} style={{ background: P.surface, border: `1px solid ${P.border}`, borderRadius: 18, overflow: 'hidden' }}>
+                  <div style={{ height: 190, background: P.surface3, animation: 'oyPulse 1.4s ease-in-out infinite' }} />
+                  <div style={{ padding: '18px 20px 20px' }}>
+                    <div style={{ height: 10, width: '35%', background: P.surface3, borderRadius: 5, marginBottom: 14, animation: 'oyPulse 1.4s ease-in-out infinite' }} />
+                    <div style={{ height: 18, width: '90%', background: P.surface3, borderRadius: 5, marginBottom: 8, animation: 'oyPulse 1.4s ease-in-out infinite' }} />
+                    <div style={{ height: 18, width: '65%', background: P.surface3, borderRadius: 5, marginBottom: 22, animation: 'oyPulse 1.4s ease-in-out infinite' }} />
+                    <div style={{ height: 1, background: P.borderSoft, marginBottom: 14 }} />
+                    <div style={{ height: 10, width: '60%', background: P.surface3, borderRadius: 5, animation: 'oyPulse 1.4s ease-in-out infinite' }} />
+                  </div>
+                </div>
+              ))
+            ) : (
+              (topMoonshots.length > 0 ? topMoonshots : DREAMS.map(d => ({
+                id: d.handle, title: d.title, handle: d.handle,
+                categories: [d.category], image_url: null,
+                stars: 0, comments: 0, crew_total: d.crew, crew_verified: 0,
+                days_left: d.days,
+                user: { name: d.handle, handle: d.handle, verified: false, avatar_color: '#38BDF8', image: null },
+              } as TopMoonshot))).map(d => (
+                <Hover
+                  key={d.id}
+                  as="a"
+                  href={`${APP_URL}/m/${d.id}`}
+                  baseStyle={{
+                    display: 'block', textDecoration: 'none', color: 'inherit', background: P.surface,
+                    border: `1px solid ${P.border}`, borderRadius: 18, overflow: 'hidden', boxShadow: P.cardShadow,
+                    transition: 'box-shadow 200ms, transform 200ms, border-color 200ms',
+                  }}
+                  hoverStyle={{ boxShadow: P.cardShadowHover, transform: 'translateY(-3px)', border: `1px solid ${P.cardBorderHover}` }}
+                >
+                  {/* banner — always shows an image (own → category fallback → generic) */}
+                  <div style={{ height: 190, position: 'relative', overflow: 'hidden',
+                    background: CATEGORY_BANNER[d.categories[0]] ?? 'linear-gradient(135deg,#1a2030,#0a1020)',
+                  }}>
+                    {d.image_url && (
+                      <img
+                        src={d.image_url}
+                        alt={d.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                    )}
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
+                    <span style={{
+                      position: 'absolute', left: 16, bottom: 13, ...mono(9.5, '#ffffff'), letterSpacing: '0.06em',
+                      background: 'rgba(255,255,255,0.16)', border: '1px solid rgba(255,255,255,0.22)', padding: '3px 9px', borderRadius: 999,
+                    }}>{d.categories[0]}</span>
+                  </div>
+
+                  <div style={{ padding: '18px 20px 20px' }}>
+                    {/* handle + verified */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                      <span style={mono(11, P.muted)}>@{d.handle}</span>
+                      {d.user.verified && (
+                        <span style={{ ...mono(8.5, P.goldDeep), background: P.goldBg, padding: '1px 6px', borderRadius: 4, letterSpacing: '0.04em' }}>VERIFIED</span>
+                      )}
+                    </div>
+
+                    <h3 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.3, margin: '0 0 16px', color: P.ink, textWrap: 'pretty' }}>{d.title}</h3>
+
+                    {/* stats row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingTop: 14, borderTop: `1px solid ${P.borderSoft}` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <StarIcon size={13} style={{ color: P.goldDeep }} />
+                        <span style={mono(12, P.ink)}>{d.stars}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <svg width={13} height={13} viewBox="0 0 16 16" fill="none" style={{ color: P.inkSoft }}>
+                          <path d="M2 2h12v9H9l-3 3v-3H2V2Z" stroke="currentColor" strokeWidth={1.5} strokeLinejoin="round" />
+                        </svg>
+                        <span style={mono(12, P.ink)}>{d.comments}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto' }}>
+                        <CrewIcon size={13} style={{ color: P.goldDeep }} />
+                        <span style={mono(12, P.ink)}>{d.crew_verified}</span>
+                        <span style={mono(10, P.muted)}>verified crew</span>
+                      </div>
+                    </div>
+
+                    {/* days left */}
+                    <div style={{ ...mono(11, P.muted), marginTop: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <ClockMiniIcon size={11} />
+                      {d.days_left > 0 ? `${d.days_left} days left` : 'Deadline passed'}
+                    </div>
+                  </div>
+                </Hover>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ░░ PRICING ░░ */}
+      <section id="pricing" style={{ background: P.surface2, borderTop: `1px solid ${P.borderSoft}`, scrollMarginTop: 80 }}>
+        <div style={{ ...shell, padding: sectionPad('96px 40px', '56px 20px') }}>
+          <div ref={pricingHeadReveal} className="reveal-up" style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto 50px' }}>
+            {/* <div style={{ ...eyebrow(P), marginBottom: 14 }}><span style={{ color: P.hairline }}>// </span>plans &amp; pricing</div> */}
+            <h2 style={{ ...display(mobile ? 32 : 44), margin: '0 0 16px', textWrap: 'balance' }}>Start free. Upgrade when it matters.</h2>
+            <p style={{ fontSize: 16, color: P.inkSoft, lineHeight: 1.6, margin: 0, textWrap: 'pretty' }}>
+              No card to declare a dream. When you&apos;re ready to stand out and welcome cash Fuel, a single step takes you further.
+            </p>
+          </div>
+
+          <div ref={pricingReveal} style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3,1fr)', gap: 20, alignItems: 'start' }}>
+            {PRICING.map(tier => {
+              const featured = !!tier.featured;
+              const cardBg = featured ? P.ink : P.surface;
+              const headColor = featured ? P.surface : P.ink;
+              const softColor = featured ? P.faint : P.inkSoft;
+              const accent = featured ? P.gold : P.goldDeep;
+              return (
+                <div
+                  key={tier.name}
+                  style={{
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: cardBg,
+                    border: `1px solid ${featured ? 'transparent' : P.border}`,
+                    borderRadius: 20,
+                    padding: featured ? '32px 26px' : '28px 26px',
+                    boxShadow: featured ? P.cardShadowHover : P.cardShadow,
+                    transform: featured ? 'translateY(-8px)' : 'none',
+                  }}
+                >
+                  {featured && (
+                    <span style={{
+                      position: 'absolute', top: 18, right: 20, ...mono(9.5, P.ink), letterSpacing: '0.06em',
+                      fontWeight: 600, background: P.gold, padding: '4px 9px', borderRadius: 999,
+                    }}>MOST POPULAR</span>
+                  )}
+                  <div style={{ fontFamily: FONT.brand, fontWeight: 600, fontSize: 20, letterSpacing: '0.01em', color: headColor, marginBottom: 12 }}>{tier.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+                    <span style={{ ...mono(32, headColor), fontWeight: 600, letterSpacing: '-0.02em' }}>{tier.price}</span>
+                    <span style={mono(12, softColor)}>{tier.period}</span>
+                  </div>
+                  <p style={{ fontSize: 14, color: softColor, lineHeight: 1.55, margin: '0 0 22px', textWrap: 'pretty' }}>{tier.blurb}</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 26 }}>
+                    {tier.features.map(f => (
+                      <div key={f} style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
+                        <CheckMarkIcon size={16} style={{ color: accent, flexShrink: 0, marginTop: 2 }} />
+                        <span style={{ fontSize: 14, color: featured ? P.surface : P.ink, lineHeight: 1.5 }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Hover
+                    as="a"
+                    href={tier.href}
+                    baseStyle={{
+                      marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: '13px 20px', borderRadius: 12, textDecoration: 'none', fontSize: 14.5, fontWeight: 600,
+                      transition: 'opacity 160ms, border-color 160ms',
+                      ...(featured
+                        ? { background: P.gold, color: P.ink }
+                        : { background: 'transparent', border: `1px solid ${P.pillBorder}`, color: P.ink }),
+                    }}
+                    hoverStyle={featured ? { opacity: 0.9 } : { border: `1px solid ${P.pillBorderHover}` }}
+                  >
+                    {tier.cta}
+                  </Hover>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* <div style={{ ...mono(11.5, P.muted), textAlign: 'center', marginTop: 32 }}>
+            // 7-day money-back guarantee · cancel anytime · no card to start
+          </div> */}
+        </div>
+      </section>
+
       {/* ░░ CLOSING CTA ░░ */}
       <section style={{ ...shell, padding: sectionPad('96px 40px', '56px 20px') }}>
         <div style={{ textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
           <div style={{ width: 64, height: 64, borderRadius: 20, background: P.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 28px' }}>
             <SparkleTailIcon size={30} style={{ color: dark ? P.gold : '#e7cf8a' }} />
           </div>
-          <h2 style={{ ...display(mobile ? 34 : 56), lineHeight: 1.04, margin: '0 0 18px', textWrap: 'balance' }}>Your dream deserves a place in the world, not just in your head.</h2>
-          <p style={{ fontSize: 17, color: P.inkSoft, lineHeight: 1.6, margin: '0 0 32px' }}>Be the first to know when we launch. No spam — just one email.</p>
-          {notifDone ? (
-            <div style={{ fontSize: 16, color: P.goldDeep, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-              <SparkleIcon size={18} style={{ color: P.gold }} />
-              You&apos;re on the list — see you at launch!
-            </div>
-          ) : (
-            <form onSubmit={handleNotify} style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <input
-                type="email"
-                required
-                value={notifEmail}
-                onChange={e => setNotifEmail(e.target.value)}
-                placeholder="your@email.com"
-                style={{
-                  flex: 1, minWidth: 240, maxWidth: 340, padding: '14px 18px', borderRadius: 12,
-                  border: `1px solid ${P.pillBorder}`, background: P.surface, color: P.ink,
-                  fontSize: 15, outline: 'none', fontFamily: 'inherit',
-                }}
-              />
-              <button
-                type="submit"
-                disabled={notifLoading}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '14px 26px', borderRadius: 12,
-                  background: P.ink, color: P.surface, border: 'none', fontSize: 15, fontWeight: 600,
-                  cursor: notifLoading ? 'wait' : 'pointer', opacity: notifLoading ? 0.7 : 1,
-                  fontFamily: 'inherit',
-                }}
-              >
-                <SparkleIcon size={16} style={{ color: P.gold }} />
-                {notifLoading ? 'Sending…' : 'Notify me at launch'}
-              </button>
-            </form>
-          )}
+          <h2 style={{ ...display(mobile ? 34 : 56), lineHeight: 1.04, margin: '0 0 18px', textWrap: 'balance' }}>Your dream deserves a place in the world,<br/>not just in your head.</h2>
+          <p style={{ fontSize: 17, color: P.inkSoft, lineHeight: 1.6, margin: '0 0 32px' }}>Name it today. Let the right people find it. Begin.</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+            <Hover
+              as="a"
+              href={`${APP_URL}/launch`}
+              baseStyle={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '16px 28px', borderRadius: 13,
+                background: P.ink, color: P.surface, textDecoration: 'none', fontSize: 15, fontWeight: 600, transition: 'opacity 160ms',
+              }}
+              hoverStyle={{ opacity: 0.9 }}
+            >
+              Launch your Moonshot
+            </Hover>
+            <Hover
+              as="a"
+              href={`${APP_URL}/feed`}
+              baseStyle={{
+                padding: '16px 24px', borderRadius: 13, background: 'transparent',
+                border: `1px solid ${P.pillBorder}`, color: P.ink, textDecoration: 'none', fontSize: 15, fontWeight: 600, transition: 'border-color 160ms',
+              }}
+              hoverStyle={{ border: `1px solid ${P.pillBorderHover}` }}
+            >
+              Browse the feed
+            </Hover>
+          </div>
           {/* <div style={{ ...mono(11.5, P.muted), marginTop: 20 }}>// free to start · 2 public Moonshots · no card required</div> */}
+        </div>
+      </section>
+
+      {/* ░░ CONTACT ░░ */}
+      <section id="contact" style={{ borderTop: `1px solid ${P.borderSoft}`, scrollMarginTop: 80 }}>
+        <div style={{ ...shell, padding: sectionPad('80px 40px', '48px 20px') }}>
+          <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: mobile ? 40 : 80, alignItems: 'start' }}>
+
+            {/* Left col — pitch */}
+            <div ref={contactReveal} className="reveal-up">
+              <h2 style={{ ...display(mobile ? 30 : 42), margin: '0 0 16px', textWrap: 'balance' }}>
+                Let&apos;s talk.
+              </h2>
+              <p style={{ fontSize: 16, color: P.inkSoft, lineHeight: 1.7, margin: '0 0 28px', textWrap: 'pretty' }}>
+                A question, a partnership idea, or just want to know more about Oystr?
+                Drop us a line — we read every message.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {([
+                  { label: 'General enquiries', value: 'contact@oystr.ca' },
+                  { label: 'Based in', value: 'St. Catharines, ON · Canada' },
+                ] as const).map(item => (
+                  <div key={item.label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 11, color: P.muted, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{item.label}</span>
+                    <span style={{ fontSize: 14, color: P.ink, fontWeight: 500 }}>{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right col — form */}
+            <div style={{ background: P.surface, border: `1px solid ${P.border}`, borderRadius: 20, padding: mobile ? '24px 20px' : '32px 28px', boxShadow: P.cardShadow, animation: 'contact-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
+              {contactStatus === 'sent' ? (
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(201,168,76,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: P.ink, marginBottom: 8 }}>Message sent!</div>
+                  <div style={{ fontSize: 14, color: P.inkSoft, lineHeight: 1.6 }}>We&apos;ll get back to you as soon as possible.</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontFamily: FONT.mono, fontSize: 11, color: P.muted, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Name</label>
+                      <input
+                        type="text"
+                        placeholder="Your name"
+                        value={contactForm.name}
+                        onChange={e => setContactForm(f => ({ ...f, name: e.target.value }))}
+                        onFocus={() => setFocusedField('name')}
+                        onBlur={() => setFocusedField(null)}
+                        disabled={contactStatus === 'sending'}
+                        style={inpStyle(P, focusedField === 'name')}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontFamily: FONT.mono, fontSize: 11, color: P.muted, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Email</label>
+                      <input
+                        type="email"
+                        placeholder="you@example.com"
+                        value={contactForm.email}
+                        onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))}
+                        onFocus={() => setFocusedField('email')}
+                        onBlur={() => setFocusedField(null)}
+                        disabled={contactStatus === 'sending'}
+                        style={inpStyle(P, focusedField === 'email')}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontFamily: FONT.mono, fontSize: 11, color: P.muted, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Message</label>
+                    <textarea
+                      placeholder="Tell us what's on your mind…"
+                      rows={5}
+                      value={contactForm.message}
+                      onChange={e => setContactForm(f => ({ ...f, message: e.target.value }))}
+                      onFocus={() => setFocusedField('message')}
+                      onBlur={() => setFocusedField(null)}
+                      disabled={contactStatus === 'sending'}
+                      style={{ ...inpStyle(P, focusedField === 'message'), resize: 'vertical', minHeight: 120 }}
+                    />
+                  </div>
+                  {contactError && (
+                    <div style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#F87171' }}>
+                      {contactError}
+                    </div>
+                  )}
+                  <Hover
+                    as="div"
+                    role="button"
+                    onClick={async () => {
+                      if (contactStatus === 'sending') return;
+                      setContactError('');
+                      if (!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()) {
+                        setContactError('Please fill in all fields.');
+                        return;
+                      }
+                      setContactStatus('sending');
+                      try {
+                        const res = await fetch('/api/contact', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(contactForm),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) { setContactError(data.error ?? 'Something went wrong.'); setContactStatus('error'); return; }
+                        setContactStatus('sent');
+                      } catch {
+                        setContactError('Network error. Please try again.');
+                        setContactStatus('error');
+                      }
+                    }}
+                    baseStyle={{
+                      marginTop: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      padding: '13px 20px', borderRadius: 12, fontSize: 14.5, fontWeight: 600,
+                      background: P.ink, color: P.surface, cursor: 'pointer', transition: 'opacity 160ms',
+                      opacity: contactStatus === 'sending' ? 0.6 : 1,
+                    }}
+                    hoverStyle={{ opacity: contactStatus === 'sending' ? 0.6 : 0.85 }}
+                  >
+                    {contactStatus === 'sending' ? 'Sending…' : (
+                      <>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                        Send message
+                      </>
+                    )}
+                  </Hover>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -647,7 +947,7 @@ function LandingContent() {
           <div>
             <Brand dot={28} mb={14} />
             <p style={{ fontSize: 13.5, color: P.muted, lineHeight: 1.6, margin: 0, maxWidth: 260 }}>
-              A new home for grown-up dreams and the crews that will carry them.
+              The home for grown-up dreams and the crews that carry them.
             </p>
           </div>
           {FOOTER_COLS.map(col => (
@@ -675,24 +975,28 @@ function LandingContent() {
         </div>
       </footer>
 
-      {/* ░░ SCROLL TO TOP ░░ */}
+      {/* ░░ GO TO TOP ░░ */}
       {showScrollTop && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          aria-label="Back to top"
+          aria-label="Retour en haut"
           style={{
-            position: 'fixed', bottom: 28, right: 24, zIndex: 40,
-            width: 44, height: 44, borderRadius: 14,
+            position: 'fixed', bottom: 28, right: 28, zIndex: 99,
+            width: 40, height: 40, borderRadius: '50%',
             background: P.ink, color: P.surface,
-            border: `1px solid ${P.border}`,
+            border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', boxShadow: P.cardShadow,
-            transition: 'opacity 200ms, transform 200ms',
-            WebkitTapHighlightColor: 'transparent',
+            boxShadow: dark
+              ? '0 4px 16px rgba(0,0,0,0.5)'
+              : '0 4px 16px rgba(0,0,0,0.15)',
+            transition: 'opacity 0.2s, transform 0.2s',
           }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.8'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 12V4M4 8l4-4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="8" y1="13" x2="8" y2="3" />
+            <polyline points="4,7 8,3 12,7" />
           </svg>
         </button>
       )}
@@ -701,7 +1005,7 @@ function LandingContent() {
       <style>{`
         @keyframes oyFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
         @keyframes oyPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
-@media (prefers-reduced-motion: reduce) { [data-hero-float] { animation: none !important; } }
+        @media (prefers-reduced-motion: reduce) { [data-hero-float] { animation: none !important; } }
       `}</style>
     </div>
   );

@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Read-only mirror of the columns oystr_landing actually queries, trimmed
+// down from the full oystr/prisma/schema.prisma (same database, same tables —
+// keep field names/types in sync with that file if it changes).
+
+enum Category {
+  TRAVEL
+  EDUCATION
+  CAREER
+  HEALTH
+  RELATIONSHIPS
+  ARTS
+  BUSINESS
+  ENVIRONMENT
+  WELLNESS
+  CHARITY
+}
+
+enum MoonshotStatus {
+  ACTIVE
+  COMPLETED
+  NOT_COMPLETED
+  RESCHEDULED
+}
+
+enum Privacy {
+  PUBLIC
+  PRIVATE_DRAFT
+}
+
+enum InteractionType {
+  STAR
+  CREW
+  FUEL
+  ORBIT
+  ECHO
+}
+
+model User {
+  id           String  @id
+  name         String
+  handle       String  @unique
+  verified     Boolean @default(false)
+  image        String?
+  avatar_color String  @default("#38BDF8")
+
+  moonshots    Moonshot[]
+  interactions Interaction[]
+}
+
+model Moonshot {
+  id          String         @id
+  user_id     String
+  title       String
+  categories  Category[]
+  target_date DateTime
+  status      MoonshotStatus @default(ACTIVE)
+  privacy     Privacy        @default(PUBLIC)
+  image_url   String?
+  stars       Int            @default(0)
+  crew        Int            @default(0)
+  comments    Int            @default(0)
+
+  user         User          @relation(fields: [user_id], references: [id])
+  interactions Interaction[]
+}
+
+model Interaction {
+  id          String           @id
+  user_id     String
+  moonshot_id String
+  type        InteractionType
+
+  user     User     @relation(fields: [user_id], references: [id])
+  moonshot Moonshot @relation(fields: [moonshot_id], references: [id])
+}

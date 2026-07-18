@@ -37,3 +37,35 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(opts?: {
 }
 
 export { gsap };
+
+/**
+ * Scroll-reveal: attaches an IntersectionObserver to the ref element.
+ * Adds `.revealed` class when it enters the viewport, triggering the
+ * `.reveal-up` CSS animation defined in globals.css.
+ */
+export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(opts?: {
+  threshold?: number;
+  rootMargin?: string;
+}) {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.classList.add('revealed');
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add('revealed');
+          observer.disconnect();
+        }
+      },
+      { threshold: opts?.threshold ?? 0.12, rootMargin: opts?.rootMargin ?? '0px 0px -40px 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return ref;
+}
