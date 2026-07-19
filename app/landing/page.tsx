@@ -129,6 +129,7 @@ export default function LandingPage() {
 
   const [topMoonshots, setTopMoonshots] = useState<TopMoonshot[] | null>(null);
   const [activeSection, setActiveSection] = useState<string>('');
+  const [menuOpen, setMenuOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
@@ -248,9 +249,80 @@ export default function LandingPage() {
             >
               {dark ? <SunIcon size={16} /> : <MoonIcon size={16} />}
             </Hover>
+            {mobile && (
+              <Hover
+                as="div"
+                role="button"
+                aria-label="Menu"
+                onClick={() => setMenuOpen(o => !o)}
+                baseStyle={{
+                  width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: `1px solid ${P.pillBorder}`, color: P.inkSoft, cursor: 'pointer', transition: 'border-color 160ms, color 160ms',
+                }}
+                hoverStyle={{ border: `1px solid ${P.pillBorderHover}`, color: P.ink }}
+              >
+                <svg width={18} height={18} viewBox="0 0 18 18" fill="none">
+                  {menuOpen ? (
+                    <>
+                      <line x1="4" y1="4" x2="14" y2="14" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
+                      <line x1="14" y1="4" x2="4" y2="14" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
+                    </>
+                  ) : (
+                    <>
+                      <line x1="3" y1="5" x2="15" y2="5" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
+                      <line x1="3" y1="9" x2="15" y2="9" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
+                      <line x1="3" y1="13" x2="15" y2="13" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
+                    </>
+                  )}
+                </svg>
+              </Hover>
+            )}
           </div>
         </div>
       </header>
+
+      {mobile && menuOpen && (
+        <>
+          <div
+            onClick={() => setMenuOpen(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 48, background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(2px)' }}
+          />
+          <nav style={{
+            position: 'fixed', top: 66, left: 12, right: 12, zIndex: 49,
+            background: dark ? 'rgba(15,23,40,0.97)' : 'rgba(255,255,255,0.97)',
+            border: `1px solid ${P.border}`, borderRadius: 16,
+            padding: '8px', boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
+            backdropFilter: 'blur(16px)',
+            display: 'flex', flexDirection: 'column', gap: 2,
+          }}>
+            {[
+              { label: 'How it works', href: '#how' },
+              { label: 'The signals', href: '#signals' },
+              { label: "Who it's for", href: '#who' },
+              { label: 'Pricing', href: '#pricing' },
+              { label: 'Contact', href: '#contact' },
+              { label: 'Blog', href: `${APP_URL}/blog` },
+              { label: 'Help', href: `${APP_URL}/help` },
+            ].map(({ label, href }) => (
+              <a key={href} href={href} onClick={() => setMenuOpen(false)} style={{
+                display: 'block', padding: '12px 16px', borderRadius: 10,
+                fontSize: 15, fontWeight: 500, color: P.ink,
+                textDecoration: 'none', fontFamily: FONT.body,
+              }}>
+                {label}
+              </a>
+            ))}
+            <span aria-hidden style={{ height: 1, background: P.borderSoft, margin: '6px 8px' }} />
+            <a href={`${APP_URL}/auth`} onClick={() => setMenuOpen(false)} style={{
+              display: 'block', padding: '12px 16px', borderRadius: 10,
+              fontSize: 15, fontWeight: 500, color: P.inkSoft,
+              textDecoration: 'none', fontFamily: FONT.body,
+            }}>
+              Sign in
+            </a>
+          </nav>
+        </>
+      )}
 
       {/* spacer for fixed navbar */}
       <div style={{ height: mobile ? 58 : 70 }} />
@@ -275,7 +347,7 @@ export default function LandingPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 34, flexWrap: 'wrap', ...heroAnim(0.32) }}>
             <Hover
               as="a"
-              href={`${APP_URL}/launch`}
+              href={`${APP_URL}/auth?mode=signup`}
               baseStyle={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '15px 24px', borderRadius: 13,
                 background: P.ink, color: P.surface, textDecoration: 'none', fontSize: 15, fontWeight: 600, transition: 'opacity 160ms',
@@ -780,7 +852,7 @@ export default function LandingPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
             <Hover
               as="a"
-              href={`${APP_URL}/launch`}
+              href={`${APP_URL}/auth?mode=signup`}
               baseStyle={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '16px 28px', borderRadius: 13,
                 background: P.ink, color: P.surface, textDecoration: 'none', fontSize: 15, fontWeight: 600, transition: 'opacity 160ms',
