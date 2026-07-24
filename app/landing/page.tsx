@@ -134,6 +134,9 @@ export default function LandingPage() {
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [contactError, setContactError] = useState('');
+  const [newsletterForm, setNewsletterForm] = useState({ firstName: '', email: '' });
+  const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [newsletterError, setNewsletterError] = useState('');
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1013,6 +1016,112 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ░░ NEWSLETTER ░░ */}
+      <section style={{ ...shell, padding: sectionPad('64px 40px', '48px 20px') }}>
+        <div style={{
+          background: dark ? 'rgba(201,168,76,0.06)' : 'rgba(201,168,76,0.08)',
+          border: `1px solid ${P.border}`, borderRadius: 20,
+          padding: mobile ? '32px 24px' : '40px 48px',
+          display: 'flex', flexDirection: mobile ? 'column' : 'row', alignItems: mobile ? 'stretch' : 'center',
+          justifyContent: 'space-between', gap: 28,
+        }}>
+          <div style={{ maxWidth: 380 }}>
+            <div style={{ ...mono(11.5, P.muted), marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Stay in the loop</div>
+            <h3 style={{ ...display(mobile ? 24 : 28), lineHeight: 1.15, margin: '0 0 8px', textWrap: 'balance' }}>Get dream-worthy updates in your inbox.</h3>
+            <p style={{ fontSize: 14, color: P.inkSoft, lineHeight: 1.6, margin: 0 }}>New features, community stories, and the occasional nudge to go chase something big.</p>
+          </div>
+
+          <div style={{ width: mobile ? '100%' : 380, flexShrink: 0 }}>
+            {newsletterStatus === 'sent' ? (
+              <div className="oy-success-fx" style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px',
+                background: P.surface, border: `1px solid ${P.border}`, borderRadius: 12,
+                animation: 'oyNewsletterSlideIn 0.35s cubic-bezier(0.16,1,0.3,1) both',
+              }}>
+                <div style={{ position: 'relative', width: 20, height: 20, flexShrink: 0 }}>
+                  <span style={{
+                    position: 'absolute', inset: -6, borderRadius: '50%',
+                    border: '2px solid #C9A84C', animation: 'oyRing 0.7s ease-out 0.05s both',
+                  }} />
+                  {[0, 60, 120, 180, 240, 300].map((angle, i) => (
+                    <span
+                      key={angle}
+                      style={{
+                        position: 'absolute', top: '50%', left: '50%', width: 5, height: 5, borderRadius: '50%',
+                        background: ['#C9A84C', '#60A5FA', '#F87171', '#34D399', '#C9A84C', '#60A5FA'][i],
+                        ['--oy-angle' as any]: `${angle}deg`,
+                        animation: 'oyConfetti 0.65s ease-out 0.05s both',
+                      }}
+                    />
+                  ))}
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ position: 'relative', animation: 'oyPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <span style={{ fontSize: 13.5, color: P.ink, fontWeight: 600 }}>You&apos;re in! Check your inbox.</span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: mobile ? 'wrap' : 'nowrap' }}>
+                  <input
+                    type="text"
+                    placeholder="First name"
+                    value={newsletterForm.firstName}
+                    onChange={e => setNewsletterForm(f => ({ ...f, firstName: e.target.value }))}
+                    disabled={newsletterStatus === 'sending'}
+                    style={{ ...inpStyle(P, false), flex: '0 1 140px', background: P.surface }}
+                  />
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={newsletterForm.email}
+                    onChange={e => setNewsletterForm(f => ({ ...f, email: e.target.value }))}
+                    disabled={newsletterStatus === 'sending'}
+                    style={{ ...inpStyle(P, false), flex: '1 1 180px', background: P.surface }}
+                  />
+                </div>
+                {newsletterError && (
+                  <div style={{ fontSize: 12.5, color: '#F87171' }}>{newsletterError}</div>
+                )}
+                <Hover
+                  as="div"
+                  role="button"
+                  onClick={async () => {
+                    if (newsletterStatus === 'sending') return;
+                    setNewsletterError('');
+                    if (!newsletterForm.email.trim()) { setNewsletterError('Please enter your email.'); return; }
+                    setNewsletterStatus('sending');
+                    try {
+                      const res = await fetch('/api/subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newsletterForm),
+                      });
+                      const data = await res.json();
+                      if (!res.ok) { setNewsletterError(data.error ?? 'Something went wrong.'); setNewsletterStatus('error'); return; }
+                      setNewsletterStatus('sent');
+                    } catch {
+                      setNewsletterError('Network error. Please try again.');
+                      setNewsletterStatus('error');
+                    }
+                  }}
+                  baseStyle={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600,
+                    background: P.ink, color: P.surface, cursor: 'pointer', transition: 'opacity 160ms',
+                    opacity: newsletterStatus === 'sending' ? 0.6 : 1,
+                  }}
+                  hoverStyle={{ opacity: newsletterStatus === 'sending' ? 0.6 : 0.85 }}
+                >
+                  {newsletterStatus === 'sending' ? 'Subscribing…' : 'Subscribe'}
+                </Hover>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* ░░ FOOTER ░░ */}
       <footer style={{ borderTop: `1px solid ${P.border}`, background: P.surface }}>
         <div style={{ ...shell, padding: sectionPad('48px 40px 36px', '40px 20px 28px'), display: 'grid', gridTemplateColumns: mobile ? '1fr 1fr' : '1.4fr 1fr 1fr 1fr', gap: mobile ? 28 : 40 }}>
@@ -1077,7 +1186,17 @@ export default function LandingPage() {
       <style>{`
         @keyframes oyFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
         @keyframes oyPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
-        @media (prefers-reduced-motion: reduce) { [data-hero-float] { animation: none !important; } }
+        @keyframes oyNewsletterSlideIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes oyPop { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes oyRing { 0% { transform: scale(0.4); opacity: 0.9; } 100% { transform: scale(2); opacity: 0; } }
+        @keyframes oyConfetti {
+          0% { transform: translate(-50%, -50%) rotate(var(--oy-angle)) translateX(0) scale(1); opacity: 1; }
+          100% { transform: translate(-50%, -50%) rotate(var(--oy-angle)) translateX(22px) scale(0); opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-hero-float] { animation: none !important; }
+          .oy-success-fx, .oy-success-fx * { animation: none !important; }
+        }
       `}</style>
     </div>
   );
