@@ -21,13 +21,13 @@ export function confirmationEmail(email: string, firstName = '') {
     return {
         from: FROM,
         to: email,
-        subject: "You're on the Oystr waitlist!",
+        subject: "Thanks for subscribing — Oystr is live!",
         html: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>You're on the Oystr waitlist!</title>
+  <title>Thanks for subscribing to Oystr</title>
 </head>
 <body style="margin:0;padding:0;background:#F2F5FC;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F5FC;padding:40px 16px;">
@@ -45,24 +45,31 @@ export function confirmationEmail(email: string, firstName = '') {
         <!-- Body -->
         <tr>
           <td style="background:#ffffff;padding:40px 40px 32px;border-left:1px solid #E2E8F0;border-right:1px solid #E2E8F0;">
-            <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8898B3;margin-bottom:12px;">Waitlist Confirmed</div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8898B3;margin-bottom:12px;">Subscribed</div>
             <h1 style="margin:0 0 20px;font-size:26px;font-weight:800;color:#0B1632;letter-spacing:-0.02em;line-height:1.2;">
-              Hey ${name} —<br/>you're on the list!
+              Hey ${name} —<br/>Oystr is live.
             </h1>
             <div style="width:36px;height:3px;background:#C9A84C;border-radius:2px;margin-bottom:24px;"></div>
             <p style="margin:0 0 20px;font-size:15px;color:#4A5870;line-height:1.7;">
-              What's on your bucket list? You're about to find out.
+              Thanks for subscribing! What's on your bucket list? You don't have to wait to find out —
+              Oystr is already live and ready for you.
             </p>
             <p style="margin:0 0 28px;font-size:15px;color:#4A5870;line-height:1.7;">
-              You'll be among the <strong style="color:#0B1632;">first to discover Oystr</strong> when we launch on
-              <strong style="color:#0B1632;">July 15, 2026</strong>. We'll send you an exclusive early access invite straight to your inbox.
+              Create a free account, declare your Moonshot, and let a real crew help you make it happen.
             </p>
 
-            <!-- Launch date box -->
-            <div style="background:#F8FAFF;border:1px solid #E2E8F0;border-radius:12px;padding:18px 22px;margin-bottom:28px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8898B3;margin-bottom:6px;">Your Moonshot starts on</div>
-              <div style="font-size:20px;font-weight:800;color:#C9A84C;letter-spacing:-0.01em;">July 15, 2026 🌕</div>
-            </div>
+            <!-- CTA -->
+            <table cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+              <tr>
+                <td style="background:#0B1632;border-radius:12px;">
+                  <a href="https://app.oystr.ca/auth?mode=signup"
+                    style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:-0.01em;">
+                    Join Oystr free
+                    <span style="color:#C9A84C;margin-left:6px;">→</span>
+                  </a>
+                </td>
+              </tr>
+            </table>
 
             <p style="margin:0;font-size:13px;color:#8898B3;line-height:1.6;">
               Big dreams require bold communities.<br/>
